@@ -13,7 +13,7 @@ from pathlib import Path
 import bcrypt
 import jwt
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "scan_history.db"
+DB_PATH = Path(__file__).resolve().parent.parent / "data" / "users.db"
 SECRET_PATH = Path(__file__).resolve().parent.parent / "data" / ".jwt_secret"
 TOKEN_TTL = timedelta(days=7)
 
@@ -81,13 +81,17 @@ def signup(name: str, email: str, password: str) -> dict:
     return _issue_token(user_id, name.strip(), email)
 
 
-def login(email: str, password: str) -> dict:
-    email = email.strip().lower()
+def login(identifier: str, password: str) -> dict:
+    """Logs in with either the account's email or its display name — whichever
+    the user finds easier to remember/type."""
+    identifier = identifier.strip().lower()
     with _connect() as conn:
-        row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM users WHERE email = ? OR LOWER(name) = ?", (identifier, identifier)
+        ).fetchone()
 
     if not row or not bcrypt.checkpw(password.encode("utf-8"), row["password_hash"].encode("utf-8")):
-        raise AuthError("Incorrect email or password.")
+        raise AuthError("Incorrect email/name or password.")
 
     return _issue_token(row["id"], row["name"], row["email"])
 

@@ -63,7 +63,7 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str
+    identifier: str  # email or display name
     password: str
 
 
@@ -99,7 +99,7 @@ def signup(payload: SignupRequest):
 @app.post("/auth/login", response_model=AuthResponse)
 def login(payload: LoginRequest):
     try:
-        return auth.login(payload.email, payload.password)
+        return auth.login(payload.identifier, payload.password)
     except auth.AuthError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
