@@ -739,6 +739,10 @@
     return !t.includes(' ') && /^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\/?#].*)?$/i.test(t);
   }
 
+  function riskPercent(score) {
+    return Math.min(100, Math.round((score || 0) * 10));
+  }
+
   function renderScanResult(result) {
     const resultBox = document.getElementById('scan-result');
 
@@ -754,7 +758,7 @@
       <div class="scan-result-card">
         <div class="scan-result-top">
           <span class="badge badge-${result.label}">${escapeHtml(result.label)}</span>
-          <span class="scan-result-note">score ${result.score} · ${escapeHtml(result.confidence)} confidence</span>
+          <span class="badge badge-${result.label}">${riskPercent(result.score)}% risk</span>
         </div>
         <div class="scan-result-explain">${escapeHtml(result.explanation)}</div>
         ${result.action !== 'log_only' ? `

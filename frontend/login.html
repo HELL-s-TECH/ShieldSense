@@ -37,6 +37,7 @@
     padding: 20px;
   }
   .brand { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: "Sora"; font-weight: 700; font-size: 19px; margin-bottom: 22px; text-decoration: none; color: var(--ink); }
+  .brand-mark { width: 26px; height: 26px; flex: none; }
   .card-wrap { width: 100%; max-width: 380px; }
   .auth-modal {
     width: 100%; background: var(--surface); border: 1px solid var(--border-strong);
@@ -69,8 +70,57 @@
 </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="shieldsense-logo" viewBox="0 0 100 100">
+        <linearGradient id="ss-shield-grad" x1="20" y1="6" x2="80" y2="96" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#5EE9E0"/>
+          <stop offset="0.5" stop-color="#3A8FE0"/>
+          <stop offset="1" stop-color="#12356E"/>
+        </linearGradient>
+        <radialGradient id="ss-iris-grad" cx="0.36" cy="0.32" r="0.8">
+          <stop offset="0" stop-color="#B6FBF4"/>
+          <stop offset="0.45" stop-color="#4FD8F0"/>
+          <stop offset="1" stop-color="#1560B0"/>
+        </radialGradient>
+        <path d="M50 5 L87 18 L87 45 C87 71 68 88 50 96 C32 88 13 71 13 45 L13 18 Z"
+              fill="url(#ss-shield-grad)" stroke="#0E2C58" stroke-width="1.2"/>
+        <path d="M50 5 L87 18 L87 45 C87 71 68 88 50 96" fill="none" stroke="#8FF3EA" stroke-width="1.1" opacity="0.55"/>
+        <g stroke="#BFF3EE" stroke-width="1.1" opacity="0.85" fill="#BFF3EE">
+          <line x1="31" y1="22" x2="42" y2="17"/>
+          <line x1="42" y1="17" x2="50" y2="20"/>
+          <line x1="50" y1="20" x2="58" y2="17"/>
+          <line x1="58" y1="17" x2="69" y2="22"/>
+          <circle cx="31" cy="22" r="1.7"/>
+          <circle cx="42" cy="17" r="1.7"/>
+          <circle cx="50" cy="20" r="1.7"/>
+          <circle cx="58" cy="17" r="1.7"/>
+          <circle cx="69" cy="22" r="1.7"/>
+        </g>
+        <circle cx="18" cy="50" r="1.6" fill="#BFF3EE" opacity="0.85"/>
+        <circle cx="82" cy="50" r="1.6" fill="#BFF3EE" opacity="0.85"/>
+        <g class="eye-group">
+          <path d="M23 50 C32 32 68 32 77 50 C68 65 32 65 23 50 Z" fill="#08192F" stroke="#BFF3EE" stroke-width="1.4"/>
+          <g class="iris-group">
+            <circle cx="50" cy="50" r="14.5" fill="url(#ss-iris-grad)"/>
+            <circle cx="44.5" cy="44" r="3.2" fill="#F3FEFD"/>
+          </g>
+        </g>
+        <g stroke="#BFF3EE" stroke-width="1.1" opacity="0.85" fill="#BFF3EE">
+          <line x1="34" y1="65" x2="50" y2="76"/>
+          <line x1="50" y1="76" x2="66" y2="65"/>
+          <circle cx="34" cy="65" r="1.6"/>
+          <circle cx="50" cy="76" r="1.6"/>
+          <circle cx="66" cy="65" r="1.6"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
   <div class="card-wrap">
-    <a href="index.html" class="brand">ShieldSense</a>
+    <a href="index.html" class="brand">
+      <svg class="brand-mark" role="img" aria-label="ShieldSense mark"><use href="#shieldsense-logo"/></svg>
+      ShieldSense
+    </a>
     <div class="auth-modal">
       <div class="auth-tabs">
         <button type="button" class="auth-tab active" data-auth-tab="login">Login</button>
