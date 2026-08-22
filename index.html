@@ -20,6 +20,9 @@
     --brand: #1B4B8F;
     --accent: #3654E0;
     --accent-ink: #FFFFFF;
+    --signup: #16418C;
+    --signup-ink: #FFFFFF;
+    --login: #0E86B8;
     --safe: #16875A;
     --safe-bg: #E4F5EC;
     --suspicious: #A1670F;
@@ -41,6 +44,9 @@
       --brand: #8FB2EE;
       --accent: #7C8CFF;
       --accent-ink: #0B0E15;
+      --signup: #4C7FD6;
+      --signup-ink: #0B0E15;
+      --login: #38D3F0;
       --safe: #3FD79A;
       --safe-bg: rgba(63,215,154,0.12);
       --suspicious: #F5B54A;
@@ -135,8 +141,12 @@
   .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--accent) 60%, transparent); }
   .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border-strong); }
   .btn-ghost:hover { background: var(--surface-2); }
-  .nav-cta { display: none; }
-  @media (min-width: 720px) { .nav-cta { display: inline-flex; } }
+  .btn-signup { background: var(--signup); color: var(--signup-ink); }
+  .btn-signup:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--signup) 60%, transparent); }
+  .btn-login { background: transparent; color: var(--login); border-color: var(--login); }
+  .btn-login:hover { background: color-mix(in srgb, var(--login) 12%, transparent); }
+  .nav-auth { display: none; align-items: center; gap: 10px; }
+  @media (min-width: 720px) { .nav-auth { display: flex; } }
   .nav-links { display: none; }
   @media (min-width: 900px) { .nav-links { display: flex; } }
 
@@ -439,7 +449,11 @@
       <a href="#inbox">See it in action</a>
       <a href="#why">Why ShieldSense</a>
     </div>
-    <a href="#scan" class="btn btn-primary nav-cta js-scroll-scan">Try a scan</a>
+    <div class="nav-auth">
+      <a href="#" class="btn btn-login">Login</a>
+      <a href="#" class="btn btn-signup">Sign up</a>
+      <a href="#scan" class="btn btn-primary js-scroll-scan">Try a scan</a>
+    </div>
   </div>
 </nav>
 
