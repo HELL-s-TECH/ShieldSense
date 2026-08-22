@@ -149,20 +149,22 @@ def history(limit: int = 50):
 @app.get("/mock-inbox")
 def mock_inbox():
     """The simulated always-on feed: runs every seed item through the real
-    pipeline and logs it as an 'auto' scan, standing in for a live
-    Gmail/browser integration until that's wired up.
+    pipeline, standing in for a live Gmail/browser integration until that's
+    wired up. Deliberately *not* written to the persistent scan history —
+    this endpoint gets called every time the landing page loads, and since
+    scans aren't scoped per-user yet, logging it would flood every user's
+    real audit trail with the same demo items on every page visit.
     """
     items = json.loads(MOCK_INBOX_PATH.read_text(encoding="utf-8"))
     results = []
     counts = {"safe": 0, "suspicious": 0, "dangerous": 0}
 
-    for item in items:
+    for index, item in enumerate(items):
         result = decide(item)
-        scan_id = log_scan(item, result, source="auto")
         counts[result.label] += 1
         results.append(
             {
-                "id": scan_id,
+                "id": f"mock-{index}",
                 "sender_name": item.get("sender_name"),
                 "sender_email": item.get("sender_email"),
                 "subject": item.get("subject"),
