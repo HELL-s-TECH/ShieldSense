@@ -121,6 +121,9 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 24px;
   }
+  .nav-left { display: flex; align-items: center; gap: 20px; }
+  .nav-left .btn { display: none; }
+  @media (min-width: 480px) { .nav-left .btn { display: inline-flex; } }
   .brand { display: flex; align-items: center; gap: 10px; font-family: "Sora"; font-weight: 700; font-size: 17px; }
   .brand-mark { width: 26px; height: 26px; flex: none; }
   .nav-links { display: flex; align-items: center; gap: 30px; }
@@ -440,10 +443,13 @@
 
 <nav class="topbar">
   <div class="nav-inner">
-    <a href="#top" class="brand">
-      <svg class="brand-mark" role="img" aria-label="ShieldSense mark"><use href="#shieldsense-logo"/></svg>
-      ShieldSense
-    </a>
+    <div class="nav-left">
+      <a href="#top" class="brand">
+        <svg class="brand-mark" role="img" aria-label="ShieldSense mark"><use href="#shieldsense-logo"/></svg>
+        ShieldSense
+      </a>
+      <a href="#scan" class="btn btn-primary js-scroll-scan">Try a scan</a>
+    </div>
     <div class="nav-links">
       <a href="#how-it-works">How it works</a>
       <a href="#inbox">See it in action</a>
@@ -452,7 +458,6 @@
     <div class="nav-auth">
       <a href="#" class="btn btn-login">Login</a>
       <a href="#" class="btn btn-signup">Sign up</a>
-      <a href="#scan" class="btn btn-primary js-scroll-scan">Try a scan</a>
     </div>
   </div>
 </nav>
