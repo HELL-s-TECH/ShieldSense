@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ShieldSense</title>
+<meta name="description" content="An AI agent that watches your inbox and browser, scores risk, and explains itself in plain language — before you ever click." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #F6F7FA;
+    --surface: #FFFFFF;
+    --surface-2: #ECEFF4;
+    --ink: #10151F;
+    --ink-muted: #5B6472;
+    --border: rgba(16,21,31,0.10);
+    --border-strong: rgba(16,21,31,0.16);
+    --brand: #1B4B8F;
+    --accent: #3654E0;
+    --accent-ink: #FFFFFF;
+    --safe: #16875A;
+    --safe-bg: #E4F5EC;
+    --suspicious: #A1670F;
+    --suspicious-bg: #FBF0DC;
+    --dangerous: #B23A50;
+    --dangerous-bg: #FBE7EB;
+    --shadow: 0 1px 2px rgba(16,21,31,0.04), 0 8px 24px -12px rgba(16,21,31,0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B0E15;
+      --surface: #121826;
+      --surface-2: #1A2130;
+      --ink: #E9ECF2;
+      --ink-muted: #93A0B4;
+      --border: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.18);
+      --brand: #8FB2EE;
+      --accent: #7C8CFF;
+      --accent-ink: #0B0E15;
+      --safe: #3FD79A;
+      --safe-bg: rgba(63,215,154,0.12);
+      --suspicious: #F5B54A;
+      --suspicious-bg: rgba(245,181,74,0.12);
+      --dangerous: #FF7A90;
+      --dangerous-bg: rgba(255,122,144,0.12);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -12px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0B0E15;
+    --surface: #121826;
+    --surface-2: #1A2130;
+    --ink: #E9ECF2;
+    --ink-muted: #93A0B4;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+    --brand: #8FB2EE;
+    --accent: #7C8CFF;
+    --accent-ink: #0B0E15;
+    --safe: #3FD79A;
+    --safe-bg: rgba(63,215,154,0.12);
+    --suspicious: #F5B54A;
+    --suspicious-bg: rgba(245,181,74,0.12);
+    --dangerous: #FF7A90;
+    --dangerous-bg: rgba(255,122,144,0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -12px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  h1, h2, h3 { font-family: "Sora", ui-sans-serif, system-ui, sans-serif; font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  a { color: inherit; }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+  section { padding: 96px 0; }
+  .divider { border-top: 1px solid var(--border); }
+
+  /* Nav */
+  nav.topbar {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--ground) 82%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1120px; margin: 0 auto; padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: "Sora"; font-weight: 700; font-size: 17px; }
+  .brand-mark { width: 26px; height: 26px; flex: none; }
+  .nav-links { display: flex; align-items: center; gap: 30px; }
+  .nav-links a {
+    text-decoration: none; font-size: 14.5px; color: var(--ink-muted); font-weight: 500;
+    transition: color 0.15s ease;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "IBM Plex Sans"; font-weight: 600; font-size: 14.5px;
+    padding: 10px 20px; border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer; text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border-strong); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .nav-cta { display: none; }
+  @media (min-width: 720px) { .nav-cta { display: inline-flex; } }
+  .nav-links { display: none; }
+  @media (min-width: 900px) { .nav-links { display: flex; } }
+
+  /* Hero */
+  .hero { padding: 84px 0 96px; }
+  .hero h1 { font-size: clamp(34px, 5vw, 54px); line-height: 1.08; max-width: 18ch; }
+  .hero .eyebrow { margin-bottom: 18px; }
+  .hero p.lede {
+    margin-top: 22px; max-width: 46ch; color: var(--ink-muted); font-size: 17.5px;
+  }
+  .scan-hero { max-width: 640px; margin-top: 40px; }
+
+  /* Glitch headline */
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    color: var(--ink); background: var(--ground); overflow: hidden;
+    opacity: 0;
+  }
+  .glitch::before { color: var(--dangerous); }
+  .glitch::after { color: var(--accent); }
+  .glitch::before { animation: glitchBefore 3.4s infinite; }
+  .glitch::after { animation: glitchAfter 3.4s infinite; }
+  @keyframes glitchBefore {
+    0%, 82%, 100% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate(0,0); }
+    84% { opacity: 1; clip-path: inset(10% 0 65% 0); transform: translate(-3px,0); }
+    87% { opacity: 1; clip-path: inset(55% 0 20% 0); transform: translate(2px,0); }
+    90% { opacity: 1; clip-path: inset(25% 0 50% 0); transform: translate(-2px,0); }
+    93% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate(0,0); }
+  }
+  @keyframes glitchAfter {
+    0%, 82%, 100% { opacity: 0; clip-path: inset(100% 0 0 0); transform: translate(0,0); }
+    84% { opacity: 1; clip-path: inset(60% 0 15% 0); transform: translate(3px,0); }
+    87% { opacity: 1; clip-path: inset(15% 0 60% 0); transform: translate(-2px,0); }
+    90% { opacity: 1; clip-path: inset(45% 0 30% 0); transform: translate(2px,0); }
+    93% { opacity: 0; clip-path: inset(100% 0 0 0); transform: translate(0,0); }
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "IBM Plex Mono"; font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em;
+    padding: 4px 10px; border-radius: 999px; text-transform: uppercase;
+  }
+  .badge-safe { color: var(--safe); background: var(--safe-bg); }
+  .badge-suspicious { color: var(--suspicious); background: var(--suspicious-bg); }
+  .badge-dangerous { color: var(--dangerous); background: var(--dangerous-bg); }
+  .mini-btn {
+    text-align: center; font-size: 13px; font-weight: 600; padding: 9px 10px; border-radius: 9px;
+    border: 1px solid var(--border-strong); cursor: default;
+  }
+  .mini-btn.confirm { background: var(--dangerous-bg); color: var(--dangerous); border-color: transparent; }
+  .mini-btn.dismiss { background: transparent; color: var(--ink-muted); }
+
+  /* Scan composer */
+  .composer {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 999px; box-shadow: var(--shadow); padding: 8px 8px 8px 8px;
+  }
+  .composer:focus-within { border-color: var(--accent); }
+  .composer-add {
+    flex: none; width: 40px; height: 40px; border-radius: 50%;
+    background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .composer-add:hover { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .composer-input {
+    flex: 1; min-width: 0; border: none; background: none; outline: none;
+    font-family: "IBM Plex Sans"; font-size: 15.5px; color: var(--ink); padding: 8px 4px;
+  }
+  .composer-input::placeholder { color: var(--ink-muted); }
+  .composer-send { flex: none; }
+  .file-chip {
+    display: flex; align-items: center; gap: 8px; width: fit-content;
+    font-family: "IBM Plex Mono"; font-size: 12.5px; color: var(--accent);
+    background: var(--surface-2); border: 1px solid var(--border-strong);
+    border-radius: 999px; padding: 7px 8px 7px 12px; margin: 12px 0 0 4px;
+  }
+  .file-chip button {
+    border: none; background: none; color: var(--ink-muted); cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 0 2px;
+  }
+  .scan-row2 { margin: 18px 0 0 4px; }
+  .report-fraud {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 999px;
+    padding: 10px 16px 10px 12px; text-decoration: none; color: var(--ink);
+    font-size: 13.5px; transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .report-fraud:hover { border-color: var(--dangerous); background: var(--dangerous-bg); }
+  .report-fraud svg { color: var(--dangerous); flex: none; }
+  .report-fraud strong { font-family: "IBM Plex Mono"; letter-spacing: 0.02em; }
+  .scan-status {
+    display: none; margin: 16px 0 0 4px; font-size: 13.5px; color: var(--ink-muted);
+    background: var(--surface-2); border-radius: 10px; padding: 12px 14px; line-height: 1.5;
+  }
+  .scan-status.show { display: block; }
+  @media (max-width: 560px) {
+    .composer { border-radius: 22px; flex-wrap: wrap; }
+    .composer-input { flex-basis: 100%; order: 3; padding: 6px 8px; }
+    .composer-send { margin-left: auto; }
+  }
+
+  /* Section headers */
+  .section-head { max-width: 620px; margin-bottom: 52px; }
+  .section-head h2 { font-size: clamp(26px, 3.4vw, 36px); margin-top: 12px; }
+  .section-head p { margin-top: 14px; color: var(--ink-muted); font-size: 16px; }
+
+  /* Mock inbox */
+  .inbox-panel {
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 18px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .inbox-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px; border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .inbox-header .title { font-weight: 600; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
+  .inbox-header .meta { font-size: 12.5px; color: var(--ink-muted); font-family: "IBM Plex Mono"; }
+  .inbox-item { border-bottom: 1px solid var(--border); }
+  .inbox-item:last-child { border-bottom: none; }
+  .inbox-row {
+    width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+    padding: 18px 22px; display: grid; grid-template-columns: auto 1fr auto auto; gap: 16px;
+    align-items: center; color: inherit; font: inherit;
+  }
+  .inbox-row:hover { background: var(--surface-2); }
+  .inbox-item.tint-dangerous .inbox-row { background: color-mix(in srgb, var(--dangerous) 9%, var(--surface)); }
+  .inbox-item.tint-dangerous .inbox-row:hover { background: color-mix(in srgb, var(--dangerous) 15%, var(--surface)); }
+  .inbox-item.tint-suspicious .inbox-row { background: color-mix(in srgb, var(--suspicious) 9%, var(--surface)); }
+  .inbox-item.tint-suspicious .inbox-row:hover { background: color-mix(in srgb, var(--suspicious) 15%, var(--surface)); }
+  .inbox-item.tint-safe .inbox-row { background: color-mix(in srgb, var(--safe) 9%, var(--surface)); }
+  .inbox-item.tint-safe .inbox-row:hover { background: color-mix(in srgb, var(--safe) 15%, var(--surface)); }
+  .risk-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .risk-dot.safe { background: var(--safe); }
+  .risk-dot.suspicious { background: var(--suspicious); }
+  .risk-dot.dangerous { background: var(--dangerous); }
+  .inbox-copy { min-width: 0; }
+  .inbox-sender { font-size: 12.5px; font-family: "IBM Plex Mono"; color: var(--ink-muted); margin-bottom: 3px; }
+  .inbox-subject { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inbox-time { font-size: 12px; color: var(--ink-muted); font-family: "IBM Plex Mono"; white-space: nowrap; }
+  .chevron { width: 16px; height: 16px; color: var(--ink-muted); transition: transform 0.2s ease; flex: none; }
+  .inbox-item[open] .chevron { transform: rotate(90deg); }
+  .inbox-detail { padding: 0 22px 22px 22px; }
+  .inbox-detail-inner {
+    background: var(--surface-2); border-radius: 12px; padding: 16px 18px; font-size: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .inbox-detail-inner .label { font-family: "IBM Plex Mono"; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+  .inbox-actions { display: flex; gap: 10px; }
+  @media (max-width: 640px) {
+    .inbox-row { grid-template-columns: auto 1fr auto; }
+    .inbox-time { display: none; }
+  }
+  summary.inbox-row::-webkit-details-marker { display: none; }
+  summary.inbox-row { list-style: none; }
+
+  /* Status summary */
+  .status-panel { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; }
+  .status-tile {
+    flex: 1; min-width: 160px; display: flex; align-items: center; gap: 14px;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .status-tile .risk-dot { width: 11px; height: 11px; }
+  .status-num { font-family: "Sora"; font-weight: 800; font-size: 26px; line-height: 1; }
+  .status-lbl { font-size: 13px; color: var(--ink-muted); margin-top: 4px; }
+
+  /* How it works */
+  .steps { position: relative; }
+  .steps-line {
+    display: none;
+  }
+  @media (min-width: 860px) {
+    .steps-track { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+    .steps-track::before {
+      content: ""; position: absolute; top: 19px; left: 6%; right: 6%; height: 1px; background: var(--border-strong);
+    }
+  }
+  .steps-track { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  .step { position: relative; }
+  .step-num {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--surface);
+    border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono"; font-weight: 600; font-size: 14px; color: var(--accent);
+    position: relative; z-index: 1; margin-bottom: 18px;
+  }
+  .step h3 { font-size: 17px; margin-bottom: 8px; }
+  .step p { color: var(--ink-muted); font-size: 14.5px; }
+
+  /* Why grid */
+  .why-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 720px) { .why-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1040px) { .why-grid { grid-template-columns: repeat(3, 1fr); } }
+  .why-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 26px; transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .why-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .why-icon {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--accent);
+  }
+  .why-card h3 { font-size: 16.5px; margin-bottom: 8px; }
+  .why-card p { color: var(--ink-muted); font-size: 14.5px; }
+
+  /* Tech strip */
+  .tech-strip { display: flex; flex-wrap: wrap; gap: 12px; }
+  .tech-chip {
+    font-family: "IBM Plex Mono"; font-size: 13.5px; font-weight: 500;
+    padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border-strong);
+    background: var(--surface); color: var(--ink);
+  }
+
+  /* Logo blink + eye movement */
+  .eye-group { transform-origin: 50px 50px; animation: blink 2.8s infinite; }
+  @keyframes blink {
+    0%, 84%, 100% { transform: scaleY(1); }
+    88% { transform: scaleY(0.06); }
+    92% { transform: scaleY(1); }
+  }
+  .iris-group { animation: lookAround 4.5s infinite; }
+  @keyframes lookAround {
+    0%, 20% { transform: translate(0, 0); }
+    30% { transform: translate(-3px, 1px); }
+    45% { transform: translate(-3px, 1px); }
+    55% { transform: translate(3px, -1.5px); }
+    70% { transform: translate(3px, -1.5px); }
+    80%, 100% { transform: translate(0, 0); }
+  }
+
+  footer { padding: 56px 0 48px; }
+  .footer-inner { display: flex; flex-direction: column; gap: 26px; }
+  @media (min-width: 720px) { .footer-inner { flex-direction: row; align-items: center; justify-content: space-between; } }
+  .footer-brand { display: flex; align-items: center; gap: 10px; font-family: "Sora"; font-weight: 700; }
+  .footer-meta { font-size: 13.5px; color: var(--ink-muted); }
+  .footer-meta .mono { color: var(--ink-muted); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="shieldsense-logo" viewBox="0 0 100 100">
+      <linearGradient id="ss-shield-grad" x1="20" y1="6" x2="80" y2="96" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#5EE9E0"/>
+        <stop offset="0.5" stop-color="#3A8FE0"/>
+        <stop offset="1" stop-color="#12356E"/>
+      </linearGradient>
+      <radialGradient id="ss-iris-grad" cx="0.36" cy="0.32" r="0.8">
+        <stop offset="0" stop-color="#B6FBF4"/>
+        <stop offset="0.45" stop-color="#4FD8F0"/>
+        <stop offset="1" stop-color="#1560B0"/>
+      </radialGradient>
+      <path d="M50 5 L87 18 L87 45 C87 71 68 88 50 96 C32 88 13 71 13 45 L13 18 Z"
+            fill="url(#ss-shield-grad)" stroke="#0E2C58" stroke-width="1.2"/>
+      <path d="M50 5 L87 18 L87 45 C87 71 68 88 50 96" fill="none" stroke="#8FF3EA" stroke-width="1.1" opacity="0.55"/>
+      <g stroke="#BFF3EE" stroke-width="1.1" opacity="0.85" fill="#BFF3EE">
+        <line x1="31" y1="22" x2="42" y2="17"/>
+        <line x1="42" y1="17" x2="50" y2="20"/>
+        <line x1="50" y1="20" x2="58" y2="17"/>
+        <line x1="58" y1="17" x2="69" y2="22"/>
+        <circle cx="31" cy="22" r="1.7"/>
+        <circle cx="42" cy="17" r="1.7"/>
+        <circle cx="50" cy="20" r="1.7"/>
+        <circle cx="58" cy="17" r="1.7"/>
+        <circle cx="69" cy="22" r="1.7"/>
+      </g>
+      <circle cx="18" cy="50" r="1.6" fill="#BFF3EE" opacity="0.85"/>
+      <circle cx="82" cy="50" r="1.6" fill="#BFF3EE" opacity="0.85"/>
+      <g class="eye-group">
+        <path d="M23 50 C32 32 68 32 77 50 C68 65 32 65 23 50 Z" fill="#08192F" stroke="#BFF3EE" stroke-width="1.4"/>
+        <g class="iris-group">
+          <circle cx="50" cy="50" r="14.5" fill="url(#ss-iris-grad)"/>
+          <circle cx="44.5" cy="44" r="3.2" fill="#F3FEFD"/>
+        </g>
+      </g>
+      <g stroke="#BFF3EE" stroke-width="1.1" opacity="0.85" fill="#BFF3EE">
+        <line x1="34" y1="65" x2="50" y2="76"/>
+        <line x1="50" y1="76" x2="66" y2="65"/>
+        <circle cx="34" cy="65" r="1.6"/>
+        <circle cx="50" cy="76" r="1.6"/>
+        <circle cx="66" cy="65" r="1.6"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<nav class="topbar">
+  <div class="nav-inner">
+    <a href="#top" class="brand">
+      <svg class="brand-mark" role="img" aria-label="ShieldSense mark"><use href="#shieldsense-logo"/></svg>
+      ShieldSense
+    </a>
+    <div class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#inbox">See it in action</a>
+      <a href="#why">Why ShieldSense</a>
+    </div>
+    <a href="#scan" class="btn btn-primary nav-cta js-scroll-scan">Try a scan</a>
+  </div>
+</nav>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <h1><span class="glitch" data-text="Security that watches quietly,">Security that watches quietly,</span><br><span class="glitch" data-text="and explains itself clearly.">and explains itself clearly.</span></h1>
+      <p class="lede">ShieldSense is an AI agent that scans links, emails, and files the moment they arrive — then tells you exactly why something looks wrong, instead of just saying <em>danger</em>.</p>
+
+      <form id="scan-form" class="scan-hero">
+        <div class="composer" id="scan">
+          <button type="button" class="composer-add" id="composer-add" title="Attach a file" aria-label="Attach a file">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <input type="file" id="scan-file" hidden />
+          <input type="text" class="composer-input" id="composer-input" placeholder="Drop in a link, an email, or a file" />
+          <button type="submit" class="btn btn-primary composer-send">Scan</button>
+        </div>
+        <div class="file-chip" id="file-chip" style="display:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <span id="file-chip-name"></span>
+          <button type="button" id="file-chip-remove" aria-label="Remove attached file">&times;</button>
+        </div>
+
+        <div class="scan-row2">
+          <a href="tel:1930" class="report-fraud">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>Report fraud: call <strong>1930</strong>, India's National Cybercrime Helpline</span>
+          </a>
+        </div>
+
+        <div class="scan-status" id="scan-status"></div>
+      </form>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="how-it-works">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">How it works</div>
+        <h2>How ShieldSense decides</h2>
+        <p>A tiered pipeline — fast where it can be, careful where it has to be.</p>
+      </div>
+      <div class="steps-track">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Watch</h3>
+          <p>ShieldSense checks every new email, link, or file the moment it shows up — you don't have to send it anything yourself.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Fast filter</h3>
+          <p>It first looks for obvious red flags, like a fake sender address or a suspicious link. Most items get cleared right here, instantly.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Deep reasoning</h3>
+          <p>For anything unclear, it compares the content to scams it has learned from, then reasons through the details and writes out what it found in plain words.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Guarded action</h3>
+          <p>It never blocks or deletes anything on its own — you always get the final say, and every check is saved so you can look back later.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="inbox">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">See it in action</div>
+        <h2>Watching the inbox, not waiting to be asked</h2>
+        <p>A background agent checks every item as it lands. Below is an example run — the same scoring and explanations the live agent will produce. Click a row to see why.</p>
+      </div>
+
+      <div class="status-panel">
+        <div class="status-tile">
+          <span class="risk-dot dangerous"></span>
+          <div><div class="status-num">2</div><div class="status-lbl">Dangerous</div></div>
+        </div>
+        <div class="status-tile">
+          <span class="risk-dot suspicious"></span>
+          <div><div class="status-num">1</div><div class="status-lbl">Suspicious</div></div>
+        </div>
+        <div class="status-tile">
+          <span class="risk-dot safe"></span>
+          <div><div class="status-num">2</div><div class="status-lbl">Safe</div></div>
+        </div>
+      </div>
+
+      <div class="inbox-panel">
+        <div class="inbox-header">
+          <div class="title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ink-muted)"><path d="M3 7l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+            Example scan results — 5 items
+          </div>
+          <div class="meta">last swept 12s ago</div>
+        </div>
+
+        <details class="inbox-item tint-dangerous">
+          <summary class="inbox-row">
+            <span class="risk-dot dangerous"></span>
+            <span class="inbox-copy">
+              <span class="inbox-sender">it-support@paypa1-secure.com</span>
+              <span class="inbox-subject">Action required: verify your account within 24 hours</span>
+            </span>
+            <span class="inbox-time">08:12</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </summary>
+          <div class="inbox-detail">
+            <div class="inbox-detail-inner">
+              <div><span class="label">Verdict</span><br><span class="badge badge-dangerous" style="margin-top:6px;display:inline-flex;">Dangerous</span></div>
+              <div><span class="label">Why flagged</span><br>Sender domain "paypa1-secure.com" is a lookalike for paypal.com (digit "1" for letter "l"), and the message pressures immediate action — a classic account-takeover pattern.</div>
+              <div class="inbox-actions">
+                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
+                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="inbox-item tint-safe">
+          <summary class="inbox-row">
+            <span class="risk-dot safe"></span>
+            <span class="inbox-copy">
+              <span class="inbox-sender">priya.sharma@yourcompany.com</span>
+              <span class="inbox-subject">Notes from today's standup</span>
+            </span>
+            <span class="inbox-time">09:03</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </summary>
+          <div class="inbox-detail">
+            <div class="inbox-detail-inner">
+              <div><span class="label">Verdict</span><br><span class="badge badge-safe" style="margin-top:6px;display:inline-flex;">Safe</span></div>
+              <div><span class="label">Why flagged</span><br>Sender domain matches your organization, no links or attachments, and it's consistent with prior conversation history. Logged silently — no alert needed.</div>
+            </div>
+          </div>
+        </details>
+
+        <details class="inbox-item tint-dangerous">
+          <summary class="inbox-row">
+            <span class="risk-dot dangerous"></span>
+            <span class="inbox-copy">
+              <span class="inbox-sender">billing@invoice-fastpay.net</span>
+              <span class="inbox-subject">Overdue invoice #4471 — pay now to avoid penalty</span>
+            </span>
+            <span class="inbox-time">09:47</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </summary>
+          <div class="inbox-detail">
+            <div class="inbox-detail-inner">
+              <div><span class="label">Verdict</span><br><span class="badge badge-dangerous" style="margin-top:6px;display:inline-flex;">Dangerous</span></div>
+              <div><span class="label">Why flagged</span><br>Attached file is a disguised executable ("invoice.pdf.exe") and the sending domain was registered three days ago — both strong malware indicators.</div>
+              <div class="inbox-actions">
+                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
+                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="inbox-item tint-suspicious">
+          <summary class="inbox-row">
+            <span class="risk-dot suspicious"></span>
+            <span class="inbox-copy">
+              <span class="inbox-sender">hr@company-benefits-update.com</span>
+              <span class="inbox-subject">Update your benefits information before Friday</span>
+            </span>
+            <span class="inbox-time">10:22</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </summary>
+          <div class="inbox-detail">
+            <div class="inbox-detail-inner">
+              <div><span class="label">Verdict</span><br><span class="badge badge-suspicious" style="margin-top:6px;display:inline-flex;">Suspicious</span></div>
+              <div><span class="label">Why flagged</span><br>Domain isn't your company's registered domain and the deadline pressure is a common social-engineering pattern — but no malicious link was found. Worth confirming with HR directly.</div>
+              <div class="inbox-actions">
+                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
+                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="inbox-item tint-safe">
+          <summary class="inbox-row">
+            <span class="risk-dot safe"></span>
+            <span class="inbox-copy">
+              <span class="inbox-sender">notifications@linkedin.com</span>
+              <span class="inbox-subject">You have 3 new profile views</span>
+            </span>
+            <span class="inbox-time">11:05</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </summary>
+          <div class="inbox-detail">
+            <div class="inbox-detail-inner">
+              <div><span class="label">Verdict</span><br><span class="badge badge-safe" style="margin-top:6px;display:inline-flex;">Safe</span></div>
+              <div><span class="label">Why flagged</span><br>Verified sending domain, and link destinations match linkedin.com — no mismatch between display text and actual URL.</div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="why">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Why ShieldSense</div>
+        <h2>Not just another spam filter</h2>
+        <p>Signature scanners look things up. ShieldSense reasons about them.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </div>
+          <h3>Reasons, doesn't just match</h3>
+          <p>Signature lists miss anything new. ShieldSense reasons about intent and behavior, catching disguised and never-seen-before attacks.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s7-4.4 7-10V5l-7-3-7 3v5c0 5.6 7 10 7 10z"/></svg>
+          </div>
+          <h3>Explains itself</h3>
+          <p>Every alert is a specific, plain-language explanation — not a red "Danger!" label you learn to ignore.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <h3>Never acts alone</h3>
+          <p>Blocking and quarantining always wait for your confirmation. The agent recommends; you decide.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h10l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+          </div>
+          <h3>Keeps a paper trail</h3>
+          <p>Every scan, automatic or manual, is logged — full accountability, not a black box.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+          </div>
+          <h3>Reaches you anywhere</h3>
+          <p>High-risk alerts also go out by SMS, so you're covered even when you're not staring at the inbox.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+</main>
+
+<footer id="team" class="divider">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <svg width="20" height="20" role="img" aria-label="ShieldSense mark"><use href="#shieldsense-logo"/></svg>
+      ShieldSense
+    </div>
+  </div>
+</footer>
+
+<script>
+  // "Try a scan" nav links: nudge the composer to the middle of the view
+  // instead of jumping it flush to the top (it's already visible on load).
+  document.querySelectorAll('.js-scroll-scan').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('scan').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+  // Scan composer: file attach chip, SMS field toggle, and a submit note
+  // (no backend yet — this only demonstrates the intended UI/UX)
+  const composerAdd = document.getElementById('composer-add');
+  const fileInput = document.getElementById('scan-file');
+  const fileChip = document.getElementById('file-chip');
+  const fileChipName = document.getElementById('file-chip-name');
+  const composerInput = document.getElementById('composer-input');
+
+  composerAdd.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) {
+      fileChipName.textContent = fileInput.files[0].name;
+      fileChip.style.display = 'flex';
+      composerInput.placeholder = 'Add a note (optional)…';
+    }
+  });
+  document.getElementById('file-chip-remove').addEventListener('click', () => {
+    fileInput.value = '';
+    fileChip.style.display = 'none';
+    composerInput.placeholder = 'Drop in a link, an email, or a file';
+  });
+
+  document.getElementById('scan-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const status = document.getElementById('scan-status');
+    status.textContent = "This build is the frontend and design pass — live scanning connects in the next stage. Meanwhile, the example results below run on the same scoring and explanation format the real agent will use.";
+    status.classList.add('show');
+  });
+</script>
+</body>
+</html>
