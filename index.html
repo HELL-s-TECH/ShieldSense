@@ -23,6 +23,7 @@
     --signup: #16418C;
     --signup-ink: #FFFFFF;
     --login: #0E86B8;
+    --electric: #0B63F6;
     --safe: #16875A;
     --safe-bg: #E4F5EC;
     --suspicious: #A1670F;
@@ -47,6 +48,7 @@
       --signup: #4C7FD6;
       --signup-ink: #0B0E15;
       --login: #38D3F0;
+      --electric: #4D9BFF;
       --safe: #3FD79A;
       --safe-bg: rgba(63,215,154,0.12);
       --suspicious: #F5B54A;
@@ -121,9 +123,13 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 24px;
   }
-  .nav-left { display: flex; align-items: center; gap: 20px; }
-  .nav-left .btn { display: none; }
-  @media (min-width: 480px) { .nav-left .btn { display: inline-flex; } }
+  .nav-left { display: flex; align-items: center; gap: 22px; }
+  .nav-scan-link {
+    color: var(--electric); font-weight: 700; font-size: 15px; text-decoration: none;
+    display: none; white-space: nowrap;
+  }
+  .nav-scan-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+  @media (min-width: 480px) { .nav-scan-link { display: inline; } }
   .brand { display: flex; align-items: center; gap: 10px; font-family: "Sora"; font-weight: 700; font-size: 17px; }
   .brand-mark { width: 26px; height: 26px; flex: none; }
   .nav-links { display: flex; align-items: center; gap: 30px; }
@@ -448,7 +454,7 @@
         <svg class="brand-mark" role="img" aria-label="ShieldSense mark"><use href="#shieldsense-logo"/></svg>
         ShieldSense
       </a>
-      <a href="#scan" class="btn btn-primary js-scroll-scan">Try a scan</a>
+      <a href="#scan" class="nav-scan-link js-scroll-scan">Try a scan</a>
     </div>
     <div class="nav-links">
       <a href="#how-it-works">How it works</a>
