@@ -6,5 +6,9 @@ __pycache__/
 .env
 .jwt_secret
 
+# n8n local state (contains an encryption key)
+n8n/.n8n/
+
 # Editors / OS
 .DS_Store
+backend/data/reasoner_debug.log

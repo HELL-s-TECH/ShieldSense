@@ -502,51 +502,16 @@
       <a href="#why">Why ShieldSense</a>
     </div>
     <div class="nav-auth" id="nav-auth-logged-out">
-      <button type="button" class="btn btn-login" data-open-auth="login">Login</button>
-      <button type="button" class="btn btn-signup" data-open-auth="signup">Sign up</button>
+      <a href="login.html" class="btn btn-login">Login</a>
+      <a href="login.html?tab=signup" class="btn btn-signup">Sign up</a>
     </div>
     <div class="nav-auth" id="nav-auth-logged-in" style="display:none;">
+      <a href="dashboard.html" class="btn btn-signup">Dashboard</a>
       <span class="nav-user" id="nav-user-name"></span>
       <button type="button" class="btn btn-login" id="logout-btn">Log out</button>
     </div>
   </div>
 </nav>
-
-<div class="auth-overlay" id="auth-overlay">
-  <div class="auth-modal">
-    <button type="button" class="auth-close" id="auth-close" aria-label="Close">&times;</button>
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab active" data-auth-tab="login">Login</button>
-      <button type="button" class="auth-tab" data-auth-tab="signup">Sign up</button>
-    </div>
-
-    <form id="login-form" class="auth-form">
-      <label class="auth-label">Email
-        <input type="email" name="email" required autocomplete="email" />
-      </label>
-      <label class="auth-label">Password
-        <input type="password" name="password" required autocomplete="current-password" />
-      </label>
-      <div class="auth-error" id="login-error"></div>
-      <button type="submit" class="btn btn-primary auth-submit">Log in</button>
-    </form>
-
-    <form id="signup-form" class="auth-form" style="display:none;">
-      <label class="auth-label">Name
-        <input type="text" name="name" required autocomplete="name" />
-      </label>
-      <label class="auth-label">Email
-        <input type="email" name="email" required autocomplete="email" />
-      </label>
-      <label class="auth-label">Password
-        <input type="password" name="password" required autocomplete="new-password" minlength="8" />
-        <span class="auth-hint">At least 8 characters.</span>
-      </label>
-      <div class="auth-error" id="signup-error"></div>
-      <button type="submit" class="btn btn-primary auth-submit">Create account</button>
-    </form>
-  </div>
-</div>
 
 <main id="top">
   <section class="hero">
@@ -915,39 +880,10 @@
 
   loadMockInbox();
 
-  // ----- Auth -----
-  const authOverlay = document.getElementById('auth-overlay');
+  // ----- Auth (nav state only — actual login/signup lives on login.html) -----
   const loggedOutBox = document.getElementById('nav-auth-logged-out');
   const loggedInBox = document.getElementById('nav-auth-logged-in');
   const navUserName = document.getElementById('nav-user-name');
-  const loginForm = document.getElementById('login-form');
-  const signupForm = document.getElementById('signup-form');
-  const loginError = document.getElementById('login-error');
-  const signupError = document.getElementById('signup-error');
-
-  function openAuthModal(tab) {
-    setAuthTab(tab || 'login');
-    authOverlay.classList.add('show');
-  }
-  function closeAuthModal() {
-    authOverlay.classList.remove('show');
-    loginError.classList.remove('show');
-    signupError.classList.remove('show');
-  }
-  function setAuthTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.authTab === tab));
-    loginForm.style.display = tab === 'login' ? 'flex' : 'none';
-    signupForm.style.display = tab === 'signup' ? 'flex' : 'none';
-  }
-
-  document.querySelectorAll('[data-open-auth]').forEach(btn => {
-    btn.addEventListener('click', () => openAuthModal(btn.dataset.openAuth));
-  });
-  document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
-  });
-  document.getElementById('auth-close').addEventListener('click', closeAuthModal);
-  authOverlay.addEventListener('click', (e) => { if (e.target === authOverlay) closeAuthModal(); });
 
   function setLoggedIn(name, email) {
     loggedOutBox.style.display = 'none';
@@ -962,50 +898,6 @@
     localStorage.removeItem('ss_name');
     localStorage.removeItem('ss_email');
   }
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginError.classList.remove('show');
-    const data = Object.fromEntries(new FormData(loginForm));
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.detail || 'Login failed.');
-      localStorage.setItem('ss_token', body.token);
-      localStorage.setItem('ss_name', body.name);
-      localStorage.setItem('ss_email', body.email);
-      setLoggedIn(body.name, body.email);
-      closeAuthModal();
-      loginForm.reset();
-    } catch (err) {
-      loginError.textContent = err.message || "Couldn't reach the backend — try again.";
-      loginError.classList.add('show');
-    }
-  });
-
-  signupForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    signupError.classList.remove('show');
-    const data = Object.fromEntries(new FormData(signupForm));
-    try {
-      const res = await fetch(`${API_BASE}/auth/signup`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.detail || 'Sign up failed.');
-      localStorage.setItem('ss_token', body.token);
-      localStorage.setItem('ss_name', body.name);
-      localStorage.setItem('ss_email', body.email);
-      setLoggedIn(body.name, body.email);
-      closeAuthModal();
-      signupForm.reset();
-    } catch (err) {
-      signupError.textContent = err.message || "Couldn't reach the backend — try again.";
-      signupError.classList.add('show');
-    }
-  });
 
   document.getElementById('logout-btn').addEventListener('click', setLoggedOut);
 

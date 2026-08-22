@@ -111,8 +111,8 @@ def me(current_user: dict = Depends(get_current_user)):
 
 @app.post("/scan", response_model=ScanResponse)
 def scan(payload: ScanRequest):
-    if not any([payload.link, payload.email_text, payload.sender_email, payload.subject]):
-        raise HTTPException(status_code=400, detail="Provide at least a link, email text, or sender/subject.")
+    if not any([payload.link, payload.email_text, payload.sender_email, payload.subject, payload.attachment]):
+        raise HTTPException(status_code=400, detail="Provide at least a link, email text, sender/subject, or a file.")
 
     item = {
         "sender_name": payload.sender_name,

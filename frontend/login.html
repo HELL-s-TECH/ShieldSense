@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Log in — ShieldSense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #F6F7FA; --surface: #FFFFFF; --surface-2: #ECEFF4;
+    --ink: #10151F; --ink-muted: #5B6472;
+    --border: rgba(16,21,31,0.10); --border-strong: rgba(16,21,31,0.16);
+    --accent: #3654E0; --accent-ink: #FFFFFF;
+    --signup: #16418C; --signup-ink: #FFFFFF;
+    --login: #0E86B8;
+    --dangerous: #B23A50;
+    --shadow: 0 1px 2px rgba(16,21,31,0.04), 0 8px 24px -12px rgba(16,21,31,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B0E15; --surface: #121826; --surface-2: #1A2130;
+      --ink: #E9ECF2; --ink-muted: #93A0B4;
+      --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.18);
+      --accent: #7C8CFF; --accent-ink: #0B0E15;
+      --signup: #4C7FD6; --signup-ink: #0B0E15; --login: #38D3F0;
+      --dangerous: #FF7A90;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -12px rgba(0,0,0,0.6);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding: 20px;
+  }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: "Sora"; font-weight: 700; font-size: 19px; margin-bottom: 22px; text-decoration: none; color: var(--ink); }
+  .card-wrap { width: 100%; max-width: 380px; }
+  .auth-modal {
+    width: 100%; background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 16px; box-shadow: var(--shadow); padding: 28px 26px;
+  }
+  .auth-tabs { display: flex; gap: 6px; margin-bottom: 22px; background: var(--surface-2); border-radius: 10px; padding: 4px; }
+  .auth-tab {
+    flex: 1; border: none; background: none; padding: 9px; border-radius: 8px;
+    font-family: "IBM Plex Sans"; font-weight: 600; font-size: 14px; color: var(--ink-muted); cursor: pointer;
+  }
+  .auth-tab.active { background: var(--surface); color: var(--ink); }
+  .auth-form { display: flex; flex-direction: column; gap: 14px; }
+  .auth-label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--ink-muted); font-weight: 500; }
+  .auth-label input {
+    font-family: "IBM Plex Sans"; font-size: 15px; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 9px; padding: 10px 12px;
+  }
+  .auth-hint { font-size: 11.5px; color: var(--ink-muted); font-weight: 400; }
+  .auth-error { font-size: 13px; color: var(--dangerous); display: none; }
+  .auth-error.show { display: block; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: "IBM Plex Sans"; font-weight: 600; font-size: 14.5px;
+    padding: 10px 20px; border-radius: 999px; border: 1px solid transparent;
+    cursor: pointer; text-decoration: none; width: 100%; margin-top: 4px;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .back-link { display: block; text-align: center; margin-top: 18px; font-size: 13.5px; color: var(--ink-muted); text-decoration: none; }
+  .back-link:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+  <div class="card-wrap">
+    <a href="index.html" class="brand">ShieldSense</a>
+    <div class="auth-modal">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-auth-tab="login">Login</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup">Sign up</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <label class="auth-label">Email
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input type="password" name="password" required autocomplete="current-password" />
+        </label>
+        <div class="auth-error" id="login-error"></div>
+        <button type="submit" class="btn btn-primary">Log in</button>
+      </form>
+
+      <form id="signup-form" class="auth-form" style="display:none;">
+        <label class="auth-label">Name
+          <input type="text" name="name" required autocomplete="name" />
+        </label>
+        <label class="auth-label">Email
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input type="password" name="password" required autocomplete="new-password" minlength="8" />
+          <span class="auth-hint">At least 8 characters.</span>
+        </label>
+        <div class="auth-error" id="signup-error"></div>
+        <button type="submit" class="btn btn-primary">Create account</button>
+      </form>
+    </div>
+    <a href="index.html" class="back-link">&larr; Back to ShieldSense</a>
+  </div>
+
+<script>
+  const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000'
+    : 'http://127.0.0.1:8000';
+
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const loginError = document.getElementById('login-error');
+  const signupError = document.getElementById('signup-error');
+
+  function setAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.authTab === tab));
+    loginForm.style.display = tab === 'login' ? 'flex' : 'none';
+    signupForm.style.display = tab === 'signup' ? 'flex' : 'none';
+  }
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
+  });
+
+  // Deep link: login.html?tab=signup
+  const params = new URLSearchParams(location.search);
+  if (params.get('tab') === 'signup') setAuthTab('signup');
+
+  function storeSession(body) {
+    localStorage.setItem('ss_token', body.token);
+    localStorage.setItem('ss_name', body.name);
+    localStorage.setItem('ss_email', body.email);
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.classList.remove('show');
+    const data = Object.fromEntries(new FormData(loginForm));
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.detail || 'Login failed.');
+      storeSession(body);
+      location.href = 'dashboard.html';
+    } catch (err) {
+      loginError.textContent = err.message || "Couldn't reach the backend — try again.";
+      loginError.classList.add('show');
+    }
+  });
+
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signupError.classList.remove('show');
+    const data = Object.fromEntries(new FormData(signupForm));
+    try {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.detail || 'Sign up failed.');
+      storeSession(body);
+      location.href = 'dashboard.html';
+    } catch (err) {
+      signupError.textContent = err.message || "Couldn't reach the backend — try again.";
+      signupError.classList.add('show');
+    }
+  });
+
+  // Already logged in? Skip straight to the dashboard.
+  if (localStorage.getItem('ss_token')) location.href = 'dashboard.html';
+</script>
+</body>
+</html>

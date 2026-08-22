@@ -1,0 +1,124 @@
+{
+  "id": "shieldsense-inbox-watcher",
+  "name": "ShieldSense Inbox Watcher",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "minutes", "minutesInterval": 1 }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Watch inbox (every 1 min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 0]
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8000/mock-inbox",
+        "options": {}
+      },
+      "id": "fetch-inbox",
+      "name": "Fetch mock inbox",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 0]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "split-items",
+      "name": "Split into items",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [280, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "requires-confirmation-check",
+              "leftValue": "={{ $json.requires_confirmation }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "needs-confirmation",
+      "name": "Needs confirmation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [520, 0]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {
+          "webhookSuffix": "=approve-{{ $json.id }}"
+        }
+      },
+      "id": "wait-for-approval",
+      "name": "Wait for human approval",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [760, -80],
+      "webhookId": "shieldsense-approval-gate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://127.0.0.1:8000/scan/{{ $json.id }}/decision",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"decision\": \"confirmed_block\"}",
+        "options": {}
+      },
+      "id": "confirm-block",
+      "name": "Log confirmed block",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, -80]
+    },
+    {
+      "parameters": {},
+      "id": "no-action-needed",
+      "name": "Already logged, no action needed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [760, 80]
+    }
+  ],
+  "connections": {
+    "Watch inbox (every 1 min)": {
+      "main": [[{ "node": "Fetch mock inbox", "type": "main", "index": 0 }]]
+    },
+    "Fetch mock inbox": {
+      "main": [[{ "node": "Split into items", "type": "main", "index": 0 }]]
+    },
+    "Split into items": {
+      "main": [[{ "node": "Needs confirmation?", "type": "main", "index": 0 }]]
+    },
+    "Needs confirmation?": {
+      "main": [
+        [{ "node": "Wait for human approval", "type": "main", "index": 0 }],
+        [{ "node": "Already logged, no action needed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for human approval": {
+      "main": [[{ "node": "Log confirmed block", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
