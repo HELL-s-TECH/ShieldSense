@@ -1,0 +1,82 @@
+[
+  {
+    "id": "1",
+    "sender_name": "IT Support",
+    "sender_email": "it-support@paypa1-secure.com",
+    "subject": "Action required: verify your account within 24 hours",
+    "body": "Dear customer, we detected unusual activity on your account. Click the link below within 24 hours to verify your identity or your account will be suspended.",
+    "attachment": null,
+    "timestamp": "2026-08-23T08:12:00Z",
+    "expected_verdict": "dangerous"
+  },
+  {
+    "id": "2",
+    "sender_name": "Priya Sharma",
+    "sender_email": "priya.sharma@yourcompany.com",
+    "subject": "Notes from today's standup",
+    "body": "Hey, here are the notes from standup: 1) API migration is on track 2) design review moved to Thursday 3) let's sync on the demo script tomorrow.",
+    "attachment": null,
+    "timestamp": "2026-08-23T09:03:00Z",
+    "expected_verdict": "safe"
+  },
+  {
+    "id": "3",
+    "sender_name": "Invoice Dept",
+    "sender_email": "billing@invoice-fastpay.net",
+    "subject": "Overdue invoice #4471 — pay now to avoid penalty",
+    "body": "Your invoice is overdue. Please open the attached file and process payment immediately to avoid a late penalty.",
+    "attachment": "invoice.pdf.exe",
+    "timestamp": "2026-08-23T09:47:00Z",
+    "expected_verdict": "dangerous"
+  },
+  {
+    "id": "4",
+    "sender_name": "HR Portal",
+    "sender_email": "hr@company-benefits-update.com",
+    "subject": "Update your benefits information before Friday",
+    "body": "Please log in and update your benefits enrollment before the deadline this Friday, or your coverage may lapse.",
+    "attachment": null,
+    "timestamp": "2026-08-23T10:22:00Z",
+    "expected_verdict": "suspicious"
+  },
+  {
+    "id": "5",
+    "sender_name": "LinkedIn",
+    "sender_email": "notifications@linkedin.com",
+    "subject": "You have 3 new profile views",
+    "body": "Your profile is getting noticed! See who's viewed your profile this week.",
+    "attachment": null,
+    "timestamp": "2026-08-23T11:05:00Z",
+    "expected_verdict": "safe"
+  },
+  {
+    "id": "6",
+    "sender_name": "Amazon",
+    "sender_email": "auto-shipping@amaz0n-orders.com",
+    "subject": "Your package could not be delivered — action needed",
+    "body": "We attempted to deliver your package but were unable to. Confirm your address within 12 hours or your order will be returned.",
+    "attachment": null,
+    "timestamp": "2026-08-23T12:15:00Z",
+    "expected_verdict": "dangerous"
+  },
+  {
+    "id": "7",
+    "sender_name": "Rahul Verma",
+    "sender_email": "rahul.verma@yourcompany.com",
+    "subject": "Re: Q3 budget draft",
+    "body": "Looks good to me, just flagged one line item in the doc — can you take a look before we send it to finance?",
+    "attachment": "q3_budget_draft.xlsx",
+    "timestamp": "2026-08-23T13:40:00Z",
+    "expected_verdict": "safe"
+  },
+  {
+    "id": "8",
+    "sender_name": "Bank Alert",
+    "sender_email": "security@yourbank-alerts.com",
+    "subject": "Unusual sign-in attempt detected",
+    "body": "We noticed a sign-in attempt from a new device. If this wasn't you, secure your account immediately by confirming your details.",
+    "attachment": null,
+    "timestamp": "2026-08-23T14:02:00Z",
+    "expected_verdict": "suspicious"
+  }
+]
