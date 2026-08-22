@@ -240,7 +240,8 @@
     border: none; background: none; color: var(--ink-muted); cursor: pointer;
     font-size: 16px; line-height: 1; padding: 0 2px;
   }
-  .scan-row2 { margin: 18px 0 0 4px; }
+  .scan-hint { margin: 10px 0 0 4px; font-size: 12.5px; color: var(--ink-muted); max-width: 56ch; }
+  .scan-row2 { margin: 14px 0 0 4px; }
   .report-fraud {
     display: inline-flex; align-items: center; gap: 10px;
     background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 999px;
@@ -493,6 +494,7 @@
           <span id="file-chip-name"></span>
           <button type="button" id="file-chip-remove" aria-label="Remove attached file">&times;</button>
         </div>
+        <div class="scan-hint">For an email, paste the subject and body text (or forward it to yourself and copy that) — not a link to the message, since ShieldSense can't open your inbox yet.</div>
 
         <div class="scan-row2">
           <a href="tel:1930" class="report-fraud">
@@ -683,6 +685,15 @@
 
   function renderScanResult(result) {
     const resultBox = document.getElementById('scan-result');
+
+    if (result.valid === false) {
+      resultBox.innerHTML = `
+        <div class="scan-result-card">
+          <div class="scan-result-explain">${escapeHtml(result.message)}</div>
+        </div>`;
+      return;
+    }
+
     resultBox.innerHTML = `
       <div class="scan-result-card">
         <div class="scan-result-top">

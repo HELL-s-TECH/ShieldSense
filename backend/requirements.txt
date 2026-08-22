@@ -8,6 +8,9 @@ tldextract==5.1.2
 scikit-learn==1.9.0
 joblib==1.5.3
 
+# RAG/LLM reasoning tier (only used when ANTHROPIC_API_KEY is set)
+anthropic==1.0.0
+
 # text classifier (training only — not needed to run the API)
 pandas==3.0.5
 kagglehub==0.3.13

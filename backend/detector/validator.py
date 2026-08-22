@@ -1,0 +1,61 @@
+"""Catches input that isn't actually a link, email, or file before it
+reaches the classifier — so something like "rtoortn" gets told to try
+again instead of coming back with a confident (and meaningless) "safe".
+"""
+
+import os
+
+from detector.preprocess import Features
+
+REJECTION_SYSTEM_PROMPT = (
+    "You are ShieldSense, a security scanning agent. The user submitted something "
+    "that doesn't look like a link, email, or file to scan. In one short, friendly "
+    "sentence, tell them you need a real link, pasted email text, or an attached "
+    "file, and ask them to try again. Don't lecture, don't apologize excessively."
+)
+
+
+def assess_input(features: Features, raw_link: str | None, raw_email_text: str | None) -> str | None:
+    """Returns None if the input looks scannable, or a short reason if not.
+
+    Checked against what the caller actually submitted (not the
+    auto-generated placeholder subject like "Manual link scan"), so a
+    garbage `link` field doesn't slip through just because *some* prose
+    text happens to be present.
+    """
+    if features.attachment_name:
+        return None  # a file was attached — that's enough on its own
+
+    if raw_link is not None:
+        # they meant to submit a link; if nothing URL-shaped came out of it,
+        # it wasn't actually a link.
+        return None if features.urls else "doesn't look like a valid link"
+
+    if raw_email_text is not None:
+        text = raw_email_text.strip()
+        words = text.split()
+        if len(words) <= 2 and len(text) < 25:
+            return "too short, and not shaped like a link, email, or recognizable text"
+        return None
+
+    return None
+
+
+def invalid_input_message(raw_text: str) -> str:
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if api_key:
+        try:
+            import anthropic
+
+            client = anthropic.Anthropic(api_key=api_key)
+            response = client.messages.create(
+                model="claude-sonnet-5",
+                max_tokens=60,
+                system=REJECTION_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": f'They submitted: "{raw_text}"'}],
+            )
+            return response.content[0].text.strip()
+        except Exception:
+            pass
+
+    return "That doesn't look like a link, email, or file — paste one of those in and try again."

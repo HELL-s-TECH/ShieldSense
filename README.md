@@ -28,6 +28,18 @@ uvicorn detector.api:app --port 8000
 
 The frontend expects the backend at `http://127.0.0.1:8000` (see `API_BASE` in `frontend/index.html`) — update that once the backend has a real deployed URL.
 
+### Enabling real Claude reasoning
+
+Ambiguous cases (and invalid-input replies) work without any setup — they use a plain template. To get real Claude-written explanations instead:
+
+```bash
+cd backend
+cp .env.example .env
+# open .env and paste in your own ANTHROPIC_API_KEY
+```
+
+`.env` is gitignored — it never gets committed. Nothing else needs to change; `detector/reasoner.py` and `detector/validator.py` both pick it up automatically at startup.
+
 ## Status
 
-Core pipeline (classifier, text model, URL features, decision/guardrail logic, scan history) is built and wired end to end between frontend and backend. Auth (login/sign-up) and a live inbox/browser integration (currently a mock inbox) are next.
+Core pipeline (classifier, text model, URL features, decision/guardrail logic, scan history, invalid-input handling) is built and wired end to end between frontend and backend. Auth (login/sign-up) and a live inbox/browser integration (currently a mock inbox) are next.

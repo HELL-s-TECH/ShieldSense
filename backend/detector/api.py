@@ -4,12 +4,17 @@ import json
 from pathlib import Path
 from typing import Literal
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+load_dotenv()  # picks up ANTHROPIC_API_KEY from backend/.env if present
+
 from detector.decision import decide
 from detector.history import get_history, log_scan, record_user_decision, summary_counts
+from detector.preprocess import preprocess
+from detector.validator import assess_input, invalid_input_message
 
 MOCK_INBOX_PATH = Path(__file__).resolve().parent.parent / "data" / "mock_inbox.json"
 
@@ -34,14 +39,16 @@ class ScanRequest(BaseModel):
 
 
 class ScanResponse(BaseModel):
-    id: int
-    label: str
-    score: int
-    confidence: str
-    explanation: str
-    explanation_source: str
-    action: str
-    requires_confirmation: bool
+    valid: bool = True
+    message: str | None = None  # set when valid=False, explaining why
+    id: int | None = None
+    label: str | None = None
+    score: int | None = None
+    confidence: str | None = None
+    explanation: str | None = None
+    explanation_source: str | None = None
+    action: str | None = None
+    requires_confirmation: bool | None = None
 
 
 class DecisionRequest(BaseModel):
@@ -61,11 +68,17 @@ def scan(payload: ScanRequest):
     item = {
         "sender_name": payload.sender_name,
         "sender_email": payload.sender_email,
-        "subject": payload.subject or (payload.link and "Manual link scan") or "Manual scan",
+        "subject": payload.subject,
         "body": payload.email_text,
         "link": payload.link,
         "attachment": payload.attachment,
     }
+
+    features = preprocess(item)
+    rejection_reason = assess_input(features, payload.link, payload.email_text)
+    if rejection_reason:
+        raw_text = payload.link or payload.email_text or ""
+        return ScanResponse(valid=False, message=invalid_input_message(raw_text))
 
     result = decide(item)
     scan_id = log_scan(item, result, source=payload.source)

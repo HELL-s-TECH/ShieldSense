@@ -37,10 +37,15 @@ def preprocess(item: dict) -> Features:
 
     urls = URL_RE.findall(text)
     if link and link not in urls:
-        urls.append(link)
-    # a bare domain typed into the manual scan box, e.g. "accounts-secure-verify.com"
-    if link and not urls and "." in link:
-        urls.append("http://" + link)
+        # only treat it as a URL if it's actually URL-shaped — a scheme, or at
+        # least a domain-like "word.tld" — not just any string dropped in the
+        # link field (garbage input needs to fail this, not get a free pass).
+        if link.startswith(("http://", "https://")):
+            urls.append(link)
+        elif re.match(r"^[\w-]+(\.[\w-]+)+(/.*)?$", link):
+            # no scheme given — assume https rather than penalizing the link
+            # later for "not using HTTPS" on a scheme *we* made up.
+            urls.append("https://" + link)
 
     attachment_name = item.get("attachment")
     attachment_extensions = []
