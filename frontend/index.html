@@ -255,6 +255,13 @@
     background: var(--surface-2); border-radius: 10px; padding: 12px 14px; line-height: 1.5;
   }
   .scan-status.show { display: block; }
+  .scan-result-card {
+    margin: 16px 0 0 4px; background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .scan-result-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .scan-result-explain { font-size: 14px; color: var(--ink); line-height: 1.5; }
+  .scan-result-note { font-size: 12.5px; color: var(--ink-muted); }
   @media (max-width: 560px) {
     .composer { border-radius: 22px; flex-wrap: wrap; }
     .composer-input { flex-basis: 100%; order: 3; padding: 6px 8px; }
@@ -495,6 +502,7 @@
         </div>
 
         <div class="scan-status" id="scan-status"></div>
+        <div id="scan-result"></div>
       </form>
     </div>
   </section>
@@ -539,131 +547,19 @@
         <p>A background agent checks every item as it lands. Below is an example run — the same scoring and explanations the live agent will produce. Click a row to see why.</p>
       </div>
 
-      <div class="status-panel">
-        <div class="status-tile">
-          <span class="risk-dot dangerous"></span>
-          <div><div class="status-num">2</div><div class="status-lbl">Dangerous</div></div>
-        </div>
-        <div class="status-tile">
-          <span class="risk-dot suspicious"></span>
-          <div><div class="status-num">1</div><div class="status-lbl">Suspicious</div></div>
-        </div>
-        <div class="status-tile">
-          <span class="risk-dot safe"></span>
-          <div><div class="status-num">2</div><div class="status-lbl">Safe</div></div>
-        </div>
+      <div class="status-panel" id="status-panel">
+        <div class="status-tile"><div><div class="status-num">–</div><div class="status-lbl">Loading…</div></div></div>
       </div>
 
       <div class="inbox-panel">
         <div class="inbox-header">
           <div class="title">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ink-muted)"><path d="M3 7l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
-            Example scan results — 5 items
+            <span id="inbox-title">Example scan results</span>
           </div>
-          <div class="meta">last swept 12s ago</div>
+          <div class="meta" id="inbox-meta">connecting…</div>
         </div>
-
-        <details class="inbox-item tint-dangerous">
-          <summary class="inbox-row">
-            <span class="risk-dot dangerous"></span>
-            <span class="inbox-copy">
-              <span class="inbox-sender">it-support@paypa1-secure.com</span>
-              <span class="inbox-subject">Action required: verify your account within 24 hours</span>
-            </span>
-            <span class="inbox-time">08:12</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-          </summary>
-          <div class="inbox-detail">
-            <div class="inbox-detail-inner">
-              <div><span class="label">Verdict</span><br><span class="badge badge-dangerous" style="margin-top:6px;display:inline-flex;">Dangerous</span></div>
-              <div><span class="label">Why flagged</span><br>Sender domain "paypa1-secure.com" is a lookalike for paypal.com (digit "1" for letter "l"), and the message pressures immediate action — a classic account-takeover pattern.</div>
-              <div class="inbox-actions">
-                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
-                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="inbox-item tint-safe">
-          <summary class="inbox-row">
-            <span class="risk-dot safe"></span>
-            <span class="inbox-copy">
-              <span class="inbox-sender">priya.sharma@yourcompany.com</span>
-              <span class="inbox-subject">Notes from today's standup</span>
-            </span>
-            <span class="inbox-time">09:03</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-          </summary>
-          <div class="inbox-detail">
-            <div class="inbox-detail-inner">
-              <div><span class="label">Verdict</span><br><span class="badge badge-safe" style="margin-top:6px;display:inline-flex;">Safe</span></div>
-              <div><span class="label">Why flagged</span><br>Sender domain matches your organization, no links or attachments, and it's consistent with prior conversation history. Logged silently — no alert needed.</div>
-            </div>
-          </div>
-        </details>
-
-        <details class="inbox-item tint-dangerous">
-          <summary class="inbox-row">
-            <span class="risk-dot dangerous"></span>
-            <span class="inbox-copy">
-              <span class="inbox-sender">billing@invoice-fastpay.net</span>
-              <span class="inbox-subject">Overdue invoice #4471 — pay now to avoid penalty</span>
-            </span>
-            <span class="inbox-time">09:47</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-          </summary>
-          <div class="inbox-detail">
-            <div class="inbox-detail-inner">
-              <div><span class="label">Verdict</span><br><span class="badge badge-dangerous" style="margin-top:6px;display:inline-flex;">Dangerous</span></div>
-              <div><span class="label">Why flagged</span><br>Attached file is a disguised executable ("invoice.pdf.exe") and the sending domain was registered three days ago — both strong malware indicators.</div>
-              <div class="inbox-actions">
-                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
-                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="inbox-item tint-suspicious">
-          <summary class="inbox-row">
-            <span class="risk-dot suspicious"></span>
-            <span class="inbox-copy">
-              <span class="inbox-sender">hr@company-benefits-update.com</span>
-              <span class="inbox-subject">Update your benefits information before Friday</span>
-            </span>
-            <span class="inbox-time">10:22</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-          </summary>
-          <div class="inbox-detail">
-            <div class="inbox-detail-inner">
-              <div><span class="label">Verdict</span><br><span class="badge badge-suspicious" style="margin-top:6px;display:inline-flex;">Suspicious</span></div>
-              <div><span class="label">Why flagged</span><br>Domain isn't your company's registered domain and the deadline pressure is a common social-engineering pattern — but no malicious link was found. Worth confirming with HR directly.</div>
-              <div class="inbox-actions">
-                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
-                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="inbox-item tint-safe">
-          <summary class="inbox-row">
-            <span class="risk-dot safe"></span>
-            <span class="inbox-copy">
-              <span class="inbox-sender">notifications@linkedin.com</span>
-              <span class="inbox-subject">You have 3 new profile views</span>
-            </span>
-            <span class="inbox-time">11:05</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-          </summary>
-          <div class="inbox-detail">
-            <div class="inbox-detail-inner">
-              <div><span class="label">Verdict</span><br><span class="badge badge-safe" style="margin-top:6px;display:inline-flex;">Safe</span></div>
-              <div><span class="label">Why flagged</span><br>Verified sending domain, and link destinations match linkedin.com — no mismatch between display text and actual URL.</div>
-            </div>
-          </div>
-        </details>
+        <div id="inbox-items"></div>
       </div>
     </div>
   </section>
@@ -730,6 +626,25 @@
 </footer>
 
 <script>
+  // Backend base URL. Defaults to a local dev server; swap this for the
+  // deployed backend's URL once it's hosted somewhere.
+  const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000'
+    : 'http://127.0.0.1:8000';
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
   // "Try a scan" nav links: nudge the composer to the middle of the view
   // instead of jumping it flush to the top (it's already visible on load).
   document.querySelectorAll('.js-scroll-scan').forEach(link => {
@@ -739,8 +654,7 @@
     });
   });
 
-  // Scan composer: file attach chip, SMS field toggle, and a submit note
-  // (no backend yet — this only demonstrates the intended UI/UX)
+  // Scan composer: file attach chip
   const composerAdd = document.getElementById('composer-add');
   const fileInput = document.getElementById('scan-file');
   const fileChip = document.getElementById('file-chip');
@@ -761,12 +675,160 @@
     composerInput.placeholder = 'Drop in a link, an email, or a file';
   });
 
-  document.getElementById('scan-form').addEventListener('submit', (e) => {
+  // ----- Live scan submission -----
+  function looksLikeLink(text) {
+    const t = text.trim();
+    return !t.includes(' ') && /^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\/?#].*)?$/i.test(t);
+  }
+
+  function renderScanResult(result) {
+    const resultBox = document.getElementById('scan-result');
+    resultBox.innerHTML = `
+      <div class="scan-result-card">
+        <div class="scan-result-top">
+          <span class="badge badge-${result.label}">${escapeHtml(result.label)}</span>
+          <span class="scan-result-note">score ${result.score} · ${escapeHtml(result.confidence)} confidence</span>
+        </div>
+        <div class="scan-result-explain">${escapeHtml(result.explanation)}</div>
+        ${result.action !== 'log_only' ? `
+          <div class="inbox-actions">
+            <div class="mini-btn confirm" data-decision="confirmed_block" data-id="${result.id}" style="flex:none;padding:8px 16px;cursor:pointer;">Confirm block</div>
+            <div class="mini-btn dismiss" data-decision="marked_safe" data-id="${result.id}" style="flex:none;padding:8px 16px;cursor:pointer;">Mark as safe</div>
+          </div>` : ''}
+      </div>`;
+
+    resultBox.querySelectorAll('[data-decision]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const decision = btn.dataset.decision;
+        try {
+          await fetch(`${API_BASE}/scan/${id}/decision`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ decision }),
+          });
+          resultBox.querySelector('.inbox-actions').innerHTML =
+            `<span class="scan-result-note">Logged: ${decision === 'confirmed_block' ? 'block confirmed' : 'marked safe'}.</span>`;
+        } catch (err) {
+          resultBox.querySelector('.inbox-actions').innerHTML =
+            `<span class="scan-result-note">Couldn't reach the backend to log that — try again.</span>`;
+        }
+      });
+    });
+  }
+
+  document.getElementById('scan-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('scan-status');
-    status.textContent = "This build is the frontend and design pass — live scanning connects in the next stage. Meanwhile, the example results below run on the same scoring and explanation format the real agent will use.";
+    const resultBox = document.getElementById('scan-result');
+    const text = composerInput.value.trim();
+    const fileName = fileInput.files[0] ? fileInput.files[0].name : null;
+
+    if (!text && !fileName) {
+      status.textContent = 'Drop in a link, some email text, or attach a file first.';
+      status.classList.add('show');
+      return;
+    }
+
+    resultBox.innerHTML = '';
+    status.textContent = 'Scanning…';
     status.classList.add('show');
+
+    const payload = { source: 'manual', attachment: fileName };
+    if (text) {
+      if (looksLikeLink(text)) payload.link = text;
+      else payload.email_text = text;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('scan failed');
+      const result = await res.json();
+      status.classList.remove('show');
+      renderScanResult(result);
+    } catch (err) {
+      status.textContent = "Couldn't reach the ShieldSense backend — make sure it's running, then try again.";
+      status.classList.add('show');
+    }
   });
+
+  // ----- Live "See it in action" inbox -----
+  const FALLBACK_ITEMS = [
+    { id: 'f1', sender_email: 'it-support@paypa1-secure.com', subject: 'Action required: verify your account within 24 hours', timestamp: '2026-08-23T08:12:00Z', label: 'dangerous', confidence: 'high', action: 'recommend_block', explanation: 'Sender domain is a lookalike for paypal.com, and the message pressures immediate action — a classic account-takeover pattern.' },
+    { id: 'f2', sender_email: 'priya.sharma@yourcompany.com', subject: "Notes from today's standup", timestamp: '2026-08-23T09:03:00Z', label: 'safe', confidence: 'high', action: 'log_only', explanation: 'Sender domain matches your organization, no links or attachments, consistent with prior conversation history.' },
+    { id: 'f3', sender_email: 'billing@invoice-fastpay.net', subject: 'Overdue invoice #4471 — pay now to avoid penalty', timestamp: '2026-08-23T09:47:00Z', label: 'dangerous', confidence: 'high', action: 'recommend_block', explanation: 'Attached file is a disguised executable and the sending domain is unrecognized — both strong malware indicators.' },
+    { id: 'f4', sender_email: 'hr@company-benefits-update.com', subject: 'Update your benefits information before Friday', timestamp: '2026-08-23T10:22:00Z', label: 'suspicious', confidence: 'low', action: 'alert', explanation: "Domain isn't your company's registered domain and the deadline pressure is a common social-engineering pattern, but no malicious link was found." },
+    { id: 'f5', sender_email: 'notifications@linkedin.com', subject: 'You have 3 new profile views', timestamp: '2026-08-23T11:05:00Z', label: 'safe', confidence: 'high', action: 'log_only', explanation: 'Verified sending domain, no mismatch between display text and actual URL.' },
+  ];
+
+  function renderStatus(counts) {
+    const panel = document.getElementById('status-panel');
+    panel.innerHTML = `
+      <div class="status-tile"><span class="risk-dot dangerous"></span><div><div class="status-num">${counts.dangerous}</div><div class="status-lbl">Dangerous</div></div></div>
+      <div class="status-tile"><span class="risk-dot suspicious"></span><div><div class="status-num">${counts.suspicious}</div><div class="status-lbl">Suspicious</div></div></div>
+      <div class="status-tile"><span class="risk-dot safe"></span><div><div class="status-num">${counts.safe}</div><div class="status-lbl">Safe</div></div></div>
+    `;
+  }
+
+  function computeCounts(items) {
+    const counts = { safe: 0, suspicious: 0, dangerous: 0 };
+    items.forEach(i => { counts[i.label] = (counts[i.label] || 0) + 1; });
+    return counts;
+  }
+
+  function renderInboxItems(items) {
+    const container = document.getElementById('inbox-items');
+    container.innerHTML = items.map(item => `
+      <details class="inbox-item tint-${item.label}">
+        <summary class="inbox-row">
+          <span class="risk-dot ${item.label}"></span>
+          <span class="inbox-copy">
+            <span class="inbox-sender">${escapeHtml(item.sender_email || item.subject || 'unknown sender')}</span>
+            <span class="inbox-subject">${escapeHtml(item.subject || '(no subject)')}</span>
+          </span>
+          <span class="inbox-time">${escapeHtml(formatTime(item.timestamp))}</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </summary>
+        <div class="inbox-detail">
+          <div class="inbox-detail-inner">
+            <div><span class="label">Verdict</span><br><span class="badge badge-${item.label}" style="margin-top:6px;display:inline-flex;">${escapeHtml(item.label)}</span></div>
+            <div><span class="label">Why flagged</span><br>${escapeHtml(item.explanation)}</div>
+            ${item.action !== 'log_only' ? `
+              <div class="inbox-actions">
+                <div class="mini-btn confirm" style="flex:none;padding:8px 16px;">Confirm block</div>
+                <div class="mini-btn dismiss" style="flex:none;padding:8px 16px;">Mark as safe</div>
+              </div>` : ''}
+          </div>
+        </div>
+      </details>
+    `).join('');
+  }
+
+  async function loadMockInbox() {
+    const titleEl = document.getElementById('inbox-title');
+    const metaEl = document.getElementById('inbox-meta');
+    try {
+      const res = await fetch(`${API_BASE}/mock-inbox`);
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      renderStatus(data.counts);
+      renderInboxItems(data.items);
+      titleEl.textContent = `Live scan results — ${data.items.length} items`;
+      metaEl.textContent = 'connected to backend';
+    } catch (err) {
+      const counts = computeCounts(FALLBACK_ITEMS);
+      renderStatus(counts);
+      renderInboxItems(FALLBACK_ITEMS);
+      titleEl.textContent = `Example scan results — ${FALLBACK_ITEMS.length} items`;
+      metaEl.textContent = 'showing cached examples — backend not reachable';
+    }
+  }
+
+  loadMockInbox();
 </script>
 </body>
 </html>

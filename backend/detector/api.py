@@ -1,5 +1,7 @@
 """FastAPI routes. Thin layer over decide() + history logging."""
 
+import json
+from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
@@ -8,6 +10,8 @@ from pydantic import BaseModel
 
 from detector.decision import decide
 from detector.history import get_history, log_scan, record_user_decision, summary_counts
+
+MOCK_INBOX_PATH = Path(__file__).resolve().parent.parent / "data" / "mock_inbox.json"
 
 app = FastAPI(title="ShieldSense API")
 
@@ -78,3 +82,37 @@ def submit_decision(scan_id: int, payload: DecisionRequest):
 @app.get("/history")
 def history(limit: int = 50):
     return {"scans": get_history(limit), "counts": summary_counts()}
+
+
+@app.get("/mock-inbox")
+def mock_inbox():
+    """The simulated always-on feed: runs every seed item through the real
+    pipeline and logs it as an 'auto' scan, standing in for a live
+    Gmail/browser integration until that's wired up.
+    """
+    items = json.loads(MOCK_INBOX_PATH.read_text(encoding="utf-8"))
+    results = []
+    counts = {"safe": 0, "suspicious": 0, "dangerous": 0}
+
+    for item in items:
+        result = decide(item)
+        scan_id = log_scan(item, result, source="auto")
+        counts[result.label] += 1
+        results.append(
+            {
+                "id": scan_id,
+                "sender_name": item.get("sender_name"),
+                "sender_email": item.get("sender_email"),
+                "subject": item.get("subject"),
+                "timestamp": item.get("timestamp"),
+                "label": result.label,
+                "score": result.score,
+                "confidence": result.confidence,
+                "explanation": result.explanation,
+                "explanation_source": result.explanation_source,
+                "action": result.action,
+                "requires_confirmation": result.requires_confirmation,
+            }
+        )
+
+    return {"items": results, "counts": counts}
