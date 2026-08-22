@@ -1,8 +1,9 @@
 """Reasoning tier: only called for low-confidence (ambiguous) classifier results.
 
 Uses an LLM, via the retrieved similar cases as context, when a key is
-configured — Claude (ANTHROPIC_API_KEY, sk-ant-...) or Grok/xAI
-(XAI_API_KEY, or an xai-... key saved under either variable name).
+configured — Claude (ANTHROPIC_API_KEY, sk-ant-...), Grok/xAI (XAI_API_KEY,
+or an xai-... key saved under either variable name), or Groq (GROQ_API_KEY,
+or a gsk_... key saved under any of the three variable names).
 Without a working key, falls back to a template built from the
 classifier's own reasons — so the pipeline runs end to end today, and
 upgrades automatically the moment a key is added. Nothing downstream
@@ -58,6 +59,13 @@ def resolve_provider() -> tuple[str, str] | None:
     """
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     xai_key = os.environ.get("XAI_API_KEY")
+    groq_key = os.environ.get("GROQ_API_KEY")
+
+    for key, label in ((groq_key, "GROQ_API_KEY"), (xai_key, "XAI_API_KEY"), (anthropic_key, "ANTHROPIC_API_KEY")):
+        if key and key.startswith("gsk_"):
+            if label != "GROQ_API_KEY":
+                logger.info("%s holds a gsk_ key — routing to Groq", label)
+            return ("groq", key)
 
     if xai_key:
         return ("xai", xai_key)
@@ -110,6 +118,24 @@ def call_xai(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) -> str
     return response.choices[0].message.content.strip()
 
 
+def call_groq(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) -> str:
+    import openai
+
+    client = openai.OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-120b",
+        # gpt-oss is a reasoning model — it spends tokens on hidden reasoning
+        # before the visible answer, so this needs more headroom than a
+        # plain chat model to avoid getting cut off with empty content.
+        max_tokens=400,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+    return response.choices[0].message.content.strip()
+
+
 def _llm_explanation(features: Features, verdict: Verdict, similar: list[SimilarCase]) -> str | None:
     resolved = resolve_provider()
     if not resolved:
@@ -121,7 +147,9 @@ def _llm_explanation(features: Features, verdict: Verdict, similar: list[Similar
     user_prompt = _build_user_prompt(features, verdict, similar)
 
     try:
-        if provider == "xai":
+        if provider == "groq":
+            text = call_groq(api_key, user_prompt)
+        elif provider == "xai":
             text = call_xai(api_key, user_prompt)
         else:
             text = call_anthropic(api_key, user_prompt)

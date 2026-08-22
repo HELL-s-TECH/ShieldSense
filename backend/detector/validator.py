@@ -4,7 +4,7 @@ again instead of coming back with a confident (and meaningless) "safe".
 """
 
 from detector.preprocess import Features
-from detector.reasoner import call_anthropic, call_xai, resolve_provider
+from detector.reasoner import call_anthropic, call_groq, call_xai, resolve_provider
 
 REJECTION_SYSTEM_PROMPT = (
     "You are ShieldSense, a security scanning agent. The user submitted something "
@@ -46,6 +46,8 @@ def invalid_input_message(raw_text: str) -> str:
         provider, api_key = resolved
         user_prompt = f'They submitted: "{raw_text}"'
         try:
+            if provider == "groq":
+                return call_groq(api_key, user_prompt, system=REJECTION_SYSTEM_PROMPT)
             if provider == "xai":
                 return call_xai(api_key, user_prompt, system=REJECTION_SYSTEM_PROMPT)
             return call_anthropic(api_key, user_prompt, system=REJECTION_SYSTEM_PROMPT)
