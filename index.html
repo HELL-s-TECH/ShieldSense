@@ -340,13 +340,14 @@
   }
   .steps-track { display: grid; grid-template-columns: 1fr; gap: 28px; }
   .step { position: relative; }
+  .step-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .step-num {
     width: 38px; height: 38px; border-radius: 50%; background: var(--surface);
     border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center;
     font-family: "IBM Plex Mono"; font-weight: 600; font-size: 14px; color: var(--accent);
-    position: relative; z-index: 1; margin-bottom: 18px;
+    position: relative; z-index: 1; flex: none;
   }
-  .step h3 { font-size: 17px; margin-bottom: 8px; }
+  .step h3 { font-size: 17px; margin-bottom: 0; }
   .step p { color: var(--ink-muted); font-size: 14.5px; }
 
   /* Why grid */
@@ -512,23 +513,19 @@
       </div>
       <div class="steps-track">
         <div class="step">
-          <div class="step-num">1</div>
-          <h3>Watch</h3>
+          <div class="step-head"><div class="step-num">1</div><h3>Watch</h3></div>
           <p>ShieldSense checks every new email, link, or file the moment it shows up — you don't have to send it anything yourself.</p>
         </div>
         <div class="step">
-          <div class="step-num">2</div>
-          <h3>Fast filter</h3>
+          <div class="step-head"><div class="step-num">2</div><h3>Fast filter</h3></div>
           <p>It first looks for obvious red flags, like a fake sender address or a suspicious link. Most items get cleared right here, instantly.</p>
         </div>
         <div class="step">
-          <div class="step-num">3</div>
-          <h3>Deep reasoning</h3>
+          <div class="step-head"><div class="step-num">3</div><h3>Deep reasoning</h3></div>
           <p>For anything unclear, it compares the content to scams it has learned from, then reasons through the details and writes out what it found in plain words.</p>
         </div>
         <div class="step">
-          <div class="step-num">4</div>
-          <h3>Guarded action</h3>
+          <div class="step-head"><div class="step-num">4</div><h3>Guarded action</h3></div>
           <p>It never blocks or deletes anything on its own — you always get the final say, and every check is saved so you can look back later.</p>
         </div>
       </div>
