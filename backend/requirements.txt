@@ -8,8 +8,13 @@ tldextract==5.1.2
 scikit-learn==1.9.0
 joblib==1.5.3
 
-# RAG/LLM reasoning tier (only used when ANTHROPIC_API_KEY is set)
+# RAG/LLM reasoning tier (only used when a key is configured)
 anthropic==1.0.0
+openai==3.3.1  # used for xAI/Grok — its API is OpenAI-compatible
+
+# auth
+bcrypt==5.0.0
+PyJWT==2.9.0
 
 # text classifier (training only — not needed to run the API)
 pandas==3.0.5

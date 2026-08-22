@@ -3,9 +3,8 @@ reaches the classifier — so something like "rtoortn" gets told to try
 again instead of coming back with a confident (and meaningless) "safe".
 """
 
-import os
-
 from detector.preprocess import Features
+from detector.reasoner import call_anthropic, call_xai, resolve_provider
 
 REJECTION_SYSTEM_PROMPT = (
     "You are ShieldSense, a security scanning agent. The user submitted something "
@@ -42,19 +41,14 @@ def assess_input(features: Features, raw_link: str | None, raw_email_text: str |
 
 
 def invalid_input_message(raw_text: str) -> str:
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if api_key:
+    resolved = resolve_provider()
+    if resolved:
+        provider, api_key = resolved
+        user_prompt = f'They submitted: "{raw_text}"'
         try:
-            import anthropic
-
-            client = anthropic.Anthropic(api_key=api_key)
-            response = client.messages.create(
-                model="claude-sonnet-5",
-                max_tokens=60,
-                system=REJECTION_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": f'They submitted: "{raw_text}"'}],
-            )
-            return response.content[0].text.strip()
+            if provider == "xai":
+                return call_xai(api_key, user_prompt, system=REJECTION_SYSTEM_PROMPT)
+            return call_anthropic(api_key, user_prompt, system=REJECTION_SYSTEM_PROMPT)
         except Exception:
             pass
 

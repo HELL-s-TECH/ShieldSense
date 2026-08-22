@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 load_dotenv()  # picks up ANTHROPIC_API_KEY from backend/.env if present
 
+from detector import auth
 from detector.decision import decide
 from detector.history import get_history, log_scan, record_user_decision, summary_counts
 from detector.preprocess import preprocess
@@ -55,9 +56,57 @@ class DecisionRequest(BaseModel):
     decision: Literal["confirmed_block", "marked_safe"]
 
 
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class AuthResponse(BaseModel):
+    token: str
+    name: str
+    email: str
+
+
+def get_current_user(authorization: str | None = Header(default=None)) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not logged in.")
+    token = authorization.removeprefix("Bearer ").strip()
+    try:
+        return auth.current_user(token)
+    except auth.AuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/auth/signup", response_model=AuthResponse)
+def signup(payload: SignupRequest):
+    try:
+        return auth.signup(payload.name, payload.email, payload.password)
+    except auth.AuthError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/auth/login", response_model=AuthResponse)
+def login(payload: LoginRequest):
+    try:
+        return auth.login(payload.email, payload.password)
+    except auth.AuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
+@app.get("/auth/me")
+def me(current_user: dict = Depends(get_current_user)):
+    return current_user
 
 
 @app.post("/scan", response_model=ScanResponse)

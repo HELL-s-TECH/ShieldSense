@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 *.db
 .env
+.jwt_secret
 
 # Editors / OS
 .DS_Store
