@@ -3,3 +3,11 @@ uvicorn[standard]==0.30.6
 pydantic==2.9.2
 rapidfuzz==3.9.7
 tldextract==5.1.2
+
+# text classifier (runtime: loading + inference)
+scikit-learn==1.9.0
+joblib==1.5.3
+
+# text classifier (training only — not needed to run the API)
+pandas==3.0.5
+kagglehub==0.3.13

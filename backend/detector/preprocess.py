@@ -12,7 +12,8 @@ URL_RE = re.compile(r"https?://[^\s<>\"]+")
 class Features:
     sender_domain: str | None
     sender_registered_domain: str | None
-    text: str
+    text: str          # subject + body + link — used for keyword fallback / retrieval matching
+    prose_text: str     # subject + body only — what the text model should actually score
     urls: list[str] = field(default_factory=list)
     attachment_name: str | None = None
     attachment_extensions: list[str] = field(default_factory=list)
@@ -31,7 +32,8 @@ def preprocess(item: dict) -> Features:
     subject = item.get("subject") or ""
     body = item.get("body") or ""
     link = item.get("link") or ""
-    text = " ".join([subject, body, link]).strip()
+    prose_text = " ".join([subject, body]).strip()
+    text = " ".join([prose_text, link]).strip()
 
     urls = URL_RE.findall(text)
     if link and link not in urls:
@@ -49,6 +51,7 @@ def preprocess(item: dict) -> Features:
         sender_domain=sender_domain,
         sender_registered_domain=_registered_domain(sender_domain) if sender_domain else None,
         text=text.lower(),
+        prose_text=prose_text.lower(),
         urls=urls,
         attachment_name=attachment_name,
         attachment_extensions=attachment_extensions,

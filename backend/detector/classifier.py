@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from rapidfuzz import fuzz
 
 from detector.preprocess import Features, preprocess
+from detector.text_model import predict_phishing_probability
+from detector.url_features import analyze_url
 
 # Brands commonly impersonated in phishing — used only to catch lookalike
 # domains (e.g. "paypa1-secure.com"), never as a literal blocklist.
@@ -26,6 +28,9 @@ TRUSTED_DOMAINS = {"linkedin.com", "google.com", "microsoft.com", "github.com"}
 
 EXECUTABLE_EXTENSIONS = {"exe", "scr", "bat", "cmd", "js", "vbs", "jar", "msi", "ps1"}
 
+# Fallback only, used if the trained model (detector/text_model.py) isn't
+# available for some reason — the real scoring is the TF-IDF + Logistic
+# Regression model trained on 82k labeled emails (train_text_model.py).
 URGENCY_KEYWORDS = [
     "verify", "suspend", "immediately", "urgent", "action required",
     "action needed", "within 24 hours", "within 12 hours", "confirm your",
@@ -33,6 +38,8 @@ URGENCY_KEYWORDS = [
     "limited time", "overdue", "pay now", "deadline", "before friday",
     "could not be delivered", "secure your account",
 ]
+
+TEXT_MODEL_PROBABILITY_THRESHOLDS = [(0.9, 3), (0.7, 2), (0.5, 1)]  # (min P(phishing), points)
 
 LOOKALIKE_SIMILARITY_THRESHOLD = 78  # 0-100; high but not identical = typosquat
 
@@ -60,9 +67,33 @@ def _domain_lookalike_score(domain: str | None) -> tuple[int, str | None]:
     return 0, None
 
 
-def _urgency_score(text: str) -> tuple[int, list[str]]:
+def _keyword_fallback_score(text: str) -> tuple[int, list[str]]:
     hits = [kw for kw in URGENCY_KEYWORDS if kw in text]
     return min(len(hits), 3), hits
+
+
+def _text_score(text: str) -> tuple[int, list[str]]:
+    probability = predict_phishing_probability(text)
+    if probability is None:
+        pts, hits = _keyword_fallback_score(text)
+        if not pts:
+            return 0, []
+        return pts, ["uses urgency/pressure language: " + ", ".join(f'"{h}"' for h in hits[:3])]
+
+    for threshold, points in TEXT_MODEL_PROBABILITY_THRESHOLDS:
+        if probability >= threshold:
+            return points, [f"trained language model estimates a {probability:.0%} chance this reads like phishing"]
+    return 0, []
+
+
+def _url_score(urls: list[str]) -> tuple[int, list[str]]:
+    total, reasons = 0, []
+    for url in urls[:3]:  # a scan item realistically has at most a couple of links worth scoring
+        signals = analyze_url(url)
+        if signals.score:
+            total += signals.score
+            reasons.append(f"link {url!r} " + ", ".join(signals.reasons))
+    return min(total, 6), reasons
 
 
 def _attachment_score(extensions: list[str]) -> int:
@@ -96,13 +127,18 @@ def classify_features(features: Features) -> Verdict:
         score -= 3
         reasons.append(f"sender domain ({features.sender_registered_domain}) is a recognized platform")
     elif features.sender_domain:
-        score += 1
+        score += 2
         reasons.append(f"sender domain ({features.sender_domain}) isn't a recognized address")
 
-    urgency_pts, hits = _urgency_score(features.text)
-    if urgency_pts:
-        score += urgency_pts
-        reasons.append("uses urgency/pressure language: " + ", ".join(f'"{h}"' for h in hits[:3]))
+    text_pts, text_reasons = _text_score(features.prose_text)
+    if text_pts:
+        score += text_pts
+        reasons.extend(text_reasons)
+
+    url_pts, url_reasons = _url_score(features.urls)
+    if url_pts:
+        score += url_pts
+        reasons.extend(url_reasons)
 
     attach_pts = _attachment_score(features.attachment_extensions)
     if attach_pts:
