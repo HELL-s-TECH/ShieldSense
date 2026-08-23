@@ -202,47 +202,54 @@
   }
   .scan-hero { max-width: 640px; margin-top: 40px; }
 
-  /* Cyberpunk glitch — scoped to a single emphasized word */
-  .glitch-em {
-    position: relative; display: inline-block; font-style: normal;
+  /* "Security" — real emphasis: italic slant + a distinct techy typeface */
+  .glitch-word {
+    font-style: italic;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
     color: #39ff14;
-    text-shadow: 0 0 4px rgba(57,255,20,0.9), 0 0 16px rgba(57,255,20,0.55);
-    animation: glitchFlicker 2.6s infinite;
+    text-shadow: 0 0 6px rgba(57,255,20,0.85), 0 0 18px rgba(57,255,20,0.5);
   }
-  .glitch-em::before, .glitch-em::after {
+
+  /* Whole-headline corruption burst — mostly still, then a violent jump-cut
+     glitch stutter, closer to a "signal got hit" burst than a smooth wobble. */
+  .glitch-line {
+    position: relative; display: inline-block;
+    animation: glitchShake 2.6s infinite steps(1, end);
+  }
+  .glitch-line::before, .glitch-line::after {
     content: attr(data-text);
     position: absolute; left: 0; top: 0; width: 100%; height: 100%;
-    overflow: hidden; background: transparent;
+    overflow: hidden; background: transparent; color: inherit;
+    mix-blend-mode: screen; pointer-events: none;
   }
-  .glitch-em::before { color: #00fff9; animation: glitchSliceA 2.1s infinite linear; }
-  .glitch-em::after { color: #ff2079; animation: glitchSliceB 1.7s infinite linear; }
-  @keyframes glitchFlicker {
-    0%, 88%, 100% { opacity: 1; }
-    89% { opacity: 0.35; }
-    90% { opacity: 1; text-shadow: none; }
-    91% { opacity: 0.6; }
-    92% { opacity: 1; text-shadow: 0 0 4px rgba(57,255,20,0.9), 0 0 16px rgba(57,255,20,0.55); }
+  .glitch-line::before { color: #ff2b4d; animation: glitchJumpA 2.6s infinite steps(1, end); }
+  .glitch-line::after { color: #39ff14; animation: glitchJumpB 2.6s infinite steps(1, end); }
+  @keyframes glitchShake {
+    0%, 90%, 100% { transform: translate(0,0); filter: none; }
+    91% { transform: translate(-5px, 2px); }
+    92% { transform: translate(4px, -2px); filter: brightness(1.7) saturate(1.5); }
+    93% { transform: translate(-3px, 0) skewX(4deg); }
+    94% { transform: translate(0,0); opacity: 0.2; }
+    95% { transform: translate(5px, 1px) skewX(-3deg); opacity: 1; }
+    96%, 100% { transform: translate(0,0); filter: none; }
   }
-  @keyframes glitchSliceA {
-    0%, 100% { transform: translate(0,0); clip-path: inset(0 0 85% 0); }
-    10% { transform: translate(-3px,-1px); clip-path: inset(10% 0 60% 0); }
-    20% { transform: translate(3px,1px); clip-path: inset(35% 0 25% 0); }
-    30% { transform: translate(-2px,1px); clip-path: inset(5% 0 80% 0); }
-    40% { transform: translate(2px,-1px); clip-path: inset(60% 0 10% 0); }
-    50% { transform: translate(0,0); clip-path: inset(0 0 85% 0); }
-    60% { transform: translate(-3px,1px); clip-path: inset(20% 0 45% 0); }
-    70% { transform: translate(3px,-1px); clip-path: inset(50% 0 15% 0); }
-    80% { transform: translate(0,0); clip-path: inset(0 0 85% 0); }
+  @keyframes glitchJumpA {
+    0%, 90%, 100% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate(0,0); }
+    91% { opacity: 0.9; clip-path: inset(8% 0 55% 0); transform: translate(-7px,0); }
+    92% { opacity: 0.9; clip-path: inset(58% 0 5% 0); transform: translate(6px,-2px); }
+    93% { opacity: 0.9; clip-path: inset(28% 0 42% 0); transform: translate(-5px,2px); }
+    94% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate(0,0); }
+    95% { opacity: 0.7; clip-path: inset(40% 0 20% 0); transform: translate(4px,0); }
+    96%, 100% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate(0,0); }
   }
-  @keyframes glitchSliceB {
-    0%, 100% { transform: translate(0,0); clip-path: inset(85% 0 0 0); }
-    12% { transform: translate(3px,1px); clip-path: inset(60% 0 10% 0); }
-    24% { transform: translate(-3px,-1px); clip-path: inset(25% 0 35% 0); }
-    36% { transform: translate(2px,-1px); clip-path: inset(80% 0 5% 0); }
-    48% { transform: translate(-2px,1px); clip-path: inset(10% 0 60% 0); }
-    60% { transform: translate(0,0); clip-path: inset(85% 0 0 0); }
-    72% { transform: translate(3px,-1px); clip-path: inset(45% 0 20% 0); }
-    84% { transform: translate(-3px,1px); clip-path: inset(15% 0 50% 0); }
+  @keyframes glitchJumpB {
+    0%, 89%, 100% { opacity: 0; clip-path: inset(100% 0 0 0); transform: translate(0,0); }
+    90% { opacity: 0.9; clip-path: inset(50% 0 20% 0); transform: translate(7px,1px); }
+    91% { opacity: 0.9; clip-path: inset(5% 0 68% 0); transform: translate(-6px,-1px); }
+    93% { opacity: 0.9; clip-path: inset(35% 0 25% 0); transform: translate(5px,2px); }
+    94% { opacity: 0; clip-path: inset(100% 0 0 0); transform: translate(0,0); }
+    95% { opacity: 0.7; clip-path: inset(15% 0 55% 0); transform: translate(-4px,0); }
+    96%, 100% { opacity: 0; clip-path: inset(100% 0 0 0); transform: translate(0,0); }
   }
 
   .badge {
@@ -534,7 +541,7 @@
 <main id="top">
   <section class="hero">
     <div class="wrap">
-      <h1><em class="glitch-em" data-text="Security">Security</em> that watches quietly,<br>and explains itself clearly.</h1>
+      <h1><span class="glitch-line" data-text="Security that watches quietly,"><em class="glitch-word">Security</em> that watches quietly,</span><br><span class="glitch-line" data-text="and explains itself clearly.">and explains itself clearly.</span></h1>
       <p class="lede">ShieldSense is an AI agent that scans links, emails, and files the moment they arrive — then tells you exactly why something looks wrong, instead of just saying <em>danger</em>.</p>
 
       <form id="scan-form" class="scan-hero">
