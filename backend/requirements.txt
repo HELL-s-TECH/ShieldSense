@@ -3,6 +3,7 @@ uvicorn[standard]==0.30.6
 pydantic==2.9.2
 rapidfuzz==3.9.7
 tldextract==5.1.2
+requests==2.34.2  # Google Safe Browsing reputation lookup (optional, needs a key)
 
 # text classifier (runtime: loading + inference)
 scikit-learn==1.9.0

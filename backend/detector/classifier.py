@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from rapidfuzz import fuzz
 
 from detector.preprocess import Features, preprocess
+from detector.reputation import check_urls
 from detector.text_model import predict_phishing_probability
 from detector.url_features import analyze_url
 
@@ -96,6 +97,24 @@ def _url_score(urls: list[str]) -> tuple[int, list[str]]:
     return min(total, 6), reasons
 
 
+REPUTATION_FLAG_SCORE = 6  # alone enough to cross the "dangerous" threshold
+
+
+def _reputation_score(urls: list[str]) -> tuple[int, list[str]]:
+    """Independent of every lexical check above: asks whether this exact
+    URL is already on Google Safe Browsing's known-bad list. Catches the
+    case lexical analysis structurally can't — a domain with a completely
+    ordinary-looking name that's nonetheless a known malware/phishing site.
+    Silently contributes nothing if no API key is configured (see
+    reputation.py) — this is a bonus signal, not a requirement.
+    """
+    result = check_urls(urls)
+    if result is None or not result.flagged:
+        return 0, []
+    threats = ", ".join(t.replace("_", " ").title() for t in result.threat_types)
+    return REPUTATION_FLAG_SCORE, [f"URL is on Google Safe Browsing's list of known malicious sites ({threats})"]
+
+
 def _attachment_score(extensions: list[str]) -> int:
     if not extensions:
         return 0
@@ -139,6 +158,11 @@ def classify_features(features: Features) -> Verdict:
     if url_pts:
         score += url_pts
         reasons.extend(url_reasons)
+
+    reputation_pts, reputation_reasons = _reputation_score(features.urls)
+    if reputation_pts:
+        score += reputation_pts
+        reasons.extend(reputation_reasons)
 
     attach_pts = _attachment_score(features.attachment_extensions)
     if attach_pts:
