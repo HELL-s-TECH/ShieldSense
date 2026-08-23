@@ -109,6 +109,10 @@ def call_anthropic(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) 
     response = client.messages.create(
         model="claude-sonnet-5",
         max_tokens=150,
+        # Low temperature: the RISK verdict this reasons out is what
+        # decision.py escalates the final label from, so the same input
+        # shouldn't flip between safe/suspicious/dangerous run to run.
+        temperature=0,
         system=system,
         messages=[{"role": "user", "content": user_prompt}],
     )
@@ -122,6 +126,7 @@ def call_xai(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) -> str
     response = client.chat.completions.create(
         model="grok-4",
         max_tokens=150,
+        temperature=0,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_prompt},
@@ -139,7 +144,11 @@ def call_groq(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) -> st
         # gpt-oss is a reasoning model — it spends tokens on hidden reasoning
         # before the visible answer, so this needs more headroom than a
         # plain chat model to avoid getting cut off with empty content.
-        max_tokens=400,
+        # 600, not 400: the RISK/EXPLANATION format adds output on top of
+        # what gpt-oss already spends on hidden reasoning, and a response
+        # that gets cut off mid-explanation is worse than a slower one.
+        max_tokens=600,
+        temperature=0,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_prompt},
@@ -148,20 +157,27 @@ def call_groq(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) -> st
     return response.choices[0].message.content.strip()
 
 
-def _parse_risk_response(raw: str) -> tuple[str | None, str]:
+def _parse_risk_response(raw: str) -> tuple[str | None, str | None]:
     """Splits the model's "RISK: ...\\nEXPLANATION: ..." response apart.
 
-    Falls back to treating the whole thing as the explanation (with no
-    suggested label) if the model didn't follow the format — a malformed
-    response should degrade gracefully, not crash or silently drop text.
+    Returns (label, explanation) — either half can independently be None:
+    - Neither found: the model ignored the format; the whole reply is
+      returned as the explanation with no suggested label.
+    - RISK found but EXPLANATION missing (e.g. the response got cut off
+      right after the risk line): still return the label, so the verdict
+      can still be escalated, but leave the explanation None rather than
+      leaking the raw "RISK: dangerous" fragment to the user — the caller
+      falls back to a proper template explanation in that case.
     """
     risk_match = re.search(r"RISK:\s*(safe|suspicious|dangerous)", raw, re.IGNORECASE)
     explanation_match = re.search(r"EXPLANATION:\s*(.+)", raw, re.IGNORECASE | re.DOTALL)
 
-    if not risk_match or not explanation_match:
+    if not risk_match and not explanation_match:
         return None, raw.strip()
 
-    return risk_match.group(1).lower(), explanation_match.group(1).strip()
+    label = risk_match.group(1).lower() if risk_match else None
+    explanation = explanation_match.group(1).strip() if explanation_match else None
+    return label, explanation
 
 
 def _llm_explanation(features: Features, verdict: Verdict, similar: list[SimilarCase]) -> tuple[str | None, str | None]:
@@ -200,4 +216,10 @@ def reason(features: Features, verdict: Verdict) -> Explanation:
     if llm_text:
         return Explanation(text=llm_text, source="llm", suggested_label=suggested_label)
 
-    return Explanation(text=_template_explanation(verdict, similar), source="template")
+    # Either no LLM call succeeded, or it succeeded but got cut off before
+    # writing the explanation half — either way, fall back to a proper
+    # template explanation, but still honor a parsed risk label so the
+    # verdict can be escalated instead of silently reverting to "safe".
+    if suggested_label:
+        logger.warning("Got a RISK label (%s) with no usable explanation text — using template text instead", suggested_label)
+    return Explanation(text=_template_explanation(verdict, similar), source="template", suggested_label=suggested_label)
