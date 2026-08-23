@@ -12,3 +12,6 @@ n8n/.n8n/
 # Editors / OS
 .DS_Store
 backend/data/reasoner_debug.log
+
+# Personal working notes, not for the public repo
+PROJECT_STATUS.md

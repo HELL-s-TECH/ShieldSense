@@ -7,10 +7,11 @@ An AI agent that scans links, emails, and files, scores the risk (safe / suspici
 ## What it does
 
 - **Scans three input types**: a pasted link, pasted email text (with an optional sender address), or a filename/attachment.
-- **Three-tier detection pipeline**:
+- **Four-tier detection pipeline**:
   1. Fast rule-based checks — domain lookalikes, URL lexical features (IP addresses, hyphenated typosquats, link shorteners, etc.), attachment extension checks.
   2. A trained text classifier (TF-IDF + Logistic Regression, 82k labeled emails, ~99% precision/recall) that reads the actual wording of an email for phishing language.
-  3. An LLM reasoning tier (Groq, Claude, or xAI/Grok — auto-detected by key) that writes a plain-language explanation for ambiguous, low-confidence cases. Falls back to a template if no key is configured.
+  3. A reputation lookup (Google Safe Browsing, optional) — catches a URL that's already known-bad even when it's lexically clean (an ordinary-looking domain with no red-flag pattern), which tier 1 structurally can't detect on its own.
+  4. An LLM reasoning tier (Groq, Claude, or xAI/Grok — auto-detected by key) that writes a plain-language explanation for ambiguous, low-confidence cases. Falls back to a template if no key is configured.
 - **Guardrail by design**: a "dangerous" verdict is only ever *recommended* — nothing is treated as blocked until a human confirms it (Confirm block / Mark as safe).
 - **Full audit trail**: every scan and every decision made on it is logged to SQLite.
 - **Real accounts**: signup/login (by email or display name) with bcrypt + JWT, on their own page, landing you on a private dashboard.
@@ -73,11 +74,23 @@ cp .env.example .env
 
 `.env` is gitignored — it never gets committed. Nothing else needs to change; `detector/reasoner.py` and `detector/validator.py` both pick up whichever key is present automatically at startup.
 
+### Enabling the reputation lookup
+
+Without this, URL scoring is lexical-only — it can't catch a domain that looks ordinary but is already a known-bad site. To close that gap:
+
+```bash
+# in backend/.env
+GOOGLE_SAFE_BROWSING_API_KEY=your-key-here
+```
+
+Get a free key at [console.cloud.google.com](https://console.cloud.google.com) → enable the "Safe Browsing API" → create credentials. Optional — with no key, every scan behaves exactly as before, just without this signal.
+
 ## Status
 
 Built and working end to end: the full detection pipeline, real accounts, the private dashboard, and the LLM reasoning tier.
 
 Known, disclosed limitations:
+- **URL reputation lookup is opt-in** — without a `GOOGLE_SAFE_BROWSING_API_KEY`, link scoring is lexical-only and can miss an ordinary-looking domain that's already known-bad (a real gap identified during review — the code to close it exists, it just needs a key).
 - **File scanning is metadata-only** — filename/extension heuristics, not real content scanning or a sandbox.
 - **No live inbox/browser integration yet** — everything is manual paste; the landing page's "See it in action" section is a simulated feed standing in for that.
 - **Backend isn't deployed** — it only runs locally right now. The live Vercel frontend's scan box only works for whoever is running the backend on their own machine.
