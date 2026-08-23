@@ -12,6 +12,7 @@ needs to change either way.
 
 import logging
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -31,13 +32,24 @@ from detector.retriever import SimilarCase, retrieve
 SYSTEM_PROMPT = """You are ShieldSense, a security agent that explains why an email, \
 link, or file looks risky (or doesn't) in one or two plain-language sentences. \
 Be specific about what you noticed. Do not use the words "danger" or generic \
-warnings — name the actual signal. Keep it under 40 words."""
+warnings — name the actual signal. Keep it under 40 words.
+
+Respond in exactly this two-line format, nothing else before or after it:
+RISK: safe|suspicious|dangerous
+EXPLANATION: <your 1-2 sentence explanation>
+
+RISK is your own independent judgment, even if it disagrees with the tentative \
+label you're given — if the content is clearly risky (e.g. a well-known piracy, \
+scam, or malware-adjacent site) say so, don't just describe it as if it were safe."""
+
+LABEL_RANK = {"safe": 0, "suspicious": 1, "dangerous": 2}
 
 
 @dataclass
 class Explanation:
     text: str
     source: str  # "llm" | "template"
+    suggested_label: str | None = None  # the LLM's own risk read, when parseable
 
 
 def _template_explanation(verdict: Verdict, similar: list[SimilarCase]) -> str:
@@ -136,11 +148,28 @@ def call_groq(api_key: str, user_prompt: str, system: str = SYSTEM_PROMPT) -> st
     return response.choices[0].message.content.strip()
 
 
-def _llm_explanation(features: Features, verdict: Verdict, similar: list[SimilarCase]) -> str | None:
+def _parse_risk_response(raw: str) -> tuple[str | None, str]:
+    """Splits the model's "RISK: ...\\nEXPLANATION: ..." response apart.
+
+    Falls back to treating the whole thing as the explanation (with no
+    suggested label) if the model didn't follow the format — a malformed
+    response should degrade gracefully, not crash or silently drop text.
+    """
+    risk_match = re.search(r"RISK:\s*(safe|suspicious|dangerous)", raw, re.IGNORECASE)
+    explanation_match = re.search(r"EXPLANATION:\s*(.+)", raw, re.IGNORECASE | re.DOTALL)
+
+    if not risk_match or not explanation_match:
+        return None, raw.strip()
+
+    return risk_match.group(1).lower(), explanation_match.group(1).strip()
+
+
+def _llm_explanation(features: Features, verdict: Verdict, similar: list[SimilarCase]) -> tuple[str | None, str | None]:
+    """Returns (explanation_text, suggested_label) — both None if no LLM call succeeded."""
     resolved = resolve_provider()
     if not resolved:
         logger.warning("No ANTHROPIC_API_KEY or XAI_API_KEY set in this process — falling back to template")
-        return None
+        return None, None
     provider, api_key = resolved
     logger.info("%s key found, length=%d, prefix=%s — calling %s", provider, len(api_key), api_key[:7], provider)
 
@@ -148,26 +177,27 @@ def _llm_explanation(features: Features, verdict: Verdict, similar: list[Similar
 
     try:
         if provider == "groq":
-            text = call_groq(api_key, user_prompt)
+            raw = call_groq(api_key, user_prompt)
         elif provider == "xai":
-            text = call_xai(api_key, user_prompt)
+            raw = call_xai(api_key, user_prompt)
         else:
-            text = call_anthropic(api_key, user_prompt)
-        logger.info("%s call succeeded (%d chars back)", provider, len(text))
-        return text
+            raw = call_anthropic(api_key, user_prompt)
+        logger.info("%s call succeeded (%d chars back)", provider, len(raw))
+        suggested_label, text = _parse_risk_response(raw)
+        return text, suggested_label
     except ImportError as exc:
         logger.warning("%s package not installed (%s) — falling back to template", provider, exc)
-        return None
+        return None, None
     except Exception as exc:
         logger.warning("%s call failed (%s: %s) — falling back to template", provider, type(exc).__name__, exc)
-        return None
+        return None, None
 
 
 def reason(features: Features, verdict: Verdict) -> Explanation:
     similar = retrieve(features)
 
-    llm_text = _llm_explanation(features, verdict, similar)
+    llm_text, suggested_label = _llm_explanation(features, verdict, similar)
     if llm_text:
-        return Explanation(text=llm_text, source="llm")
+        return Explanation(text=llm_text, source="llm", suggested_label=suggested_label)
 
     return Explanation(text=_template_explanation(verdict, similar), source="template")
